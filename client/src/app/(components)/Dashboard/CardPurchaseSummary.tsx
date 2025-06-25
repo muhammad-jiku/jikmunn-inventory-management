@@ -15,27 +15,26 @@ const CardPurchaseSummary = () => {
   console.log('purchase dashboardMetrics data', data);
 
   const purchaseData = data?.purchaseSummary || [];
-
   const lastDataPoint = purchaseData[purchaseData.length - 1] || null;
 
   return (
-    <div className='flex flex-col justify-between row-span-2 xl:row-span-3 col-span-1 md:col-span-2 xl:col-span-1 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl'>
+    <div className='h-full flex flex-col row-span-2 xl:row-span-3 col-span-1 md:col-span-2 xl:col-span-1 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl border border-gray-200 dark:border-gray-700'>
       {isLoading ? (
         <div className='m-5'>Loading...</div>
       ) : (
         <>
-          {/* HEADER */}
-          <div>
+          {/* HEADER - Fixed height */}
+          <div className='flex-shrink-0'>
             <h2 className='text-lg font-semibold mb-2 px-7 pt-5'>
               Purchase Summary
             </h2>
             <hr className='border-gray-200 dark:border-gray-600' />
           </div>
 
-          {/* BODY */}
-          <div>
-            {/* BODY HEADER */}
-            <div className='mb-4 mt-7 px-7'>
+          {/* BODY - Flexible height with proper overflow */}
+          <div className='flex-1 flex flex-col min-h-0'>
+            {/* BODY HEADER - Fixed height */}
+            <div className='flex-shrink-0 mb-4 mt-7 px-7'>
               <p className='text-xs text-gray-700 dark:text-gray-300'>
                 Purchased
               </p>
@@ -63,36 +62,48 @@ const CardPurchaseSummary = () => {
                 )}
               </div>
             </div>
-            {/* CHART */}
-            <ResponsiveContainer width='100%' height={200} className='p-2'>
-              <AreaChart
-                data={purchaseData}
-                margin={{ top: 0, right: 0, left: -50, bottom: 45 }}
-              >
-                <XAxis dataKey='date' tick={false} axisLine={false} />
-                <YAxis tickLine={false} tick={false} axisLine={false} />
-                <Tooltip
-                  formatter={(value: number) => [
-                    `$${value.toLocaleString('en')}`,
-                  ]}
-                  labelFormatter={(label) => {
-                    const date = new Date(label);
-                    return date.toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <Area
-                  type='linear'
-                  dataKey='totalPurchased'
-                  stroke='#8884d8'
-                  fill='#8884d8'
-                  dot={true}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+
+            {/* CHART - Flexible height, contained within remaining space */}
+            <div className='flex-1 min-h-0 px-2'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <AreaChart
+                  data={purchaseData}
+                  margin={{ top: 5, right: 5, left: -45, bottom: 5 }}
+                >
+                  <XAxis
+                    dataKey='date'
+                    tick={{ fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    tick={{ fontSize: 12 }}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      `$${value.toLocaleString('en')}`,
+                    ]}
+                    labelFormatter={(label) => {
+                      const date = new Date(label);
+                      return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                  <Area
+                    type='linear'
+                    dataKey='totalPurchased'
+                    stroke='#8884d8'
+                    fill='#8884d8'
+                    dot={true}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </>
       )}

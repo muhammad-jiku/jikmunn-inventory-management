@@ -43,23 +43,23 @@ const CardSalesSummary = () => {
   }
 
   return (
-    <div className='row-span-3 xl:row-span-6 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl flex flex-col justify-between'>
+    <div className='h-full md:h-[578px] row-span-3 xl:row-span-6 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl flex flex-col border border-gray-200 dark:border-gray-700'>
       {isLoading ? (
         <div className='m-5'>Loading...</div>
       ) : (
         <>
-          {/* HEADER */}
-          <div>
+          {/* HEADER - Fixed height */}
+          <div className='flex-shrink-0'>
             <h2 className='text-lg font-semibold mb-2 px-7 pt-5'>
               Sales Summary
             </h2>
             <hr className='border-gray-200 dark:border-gray-600' />
           </div>
 
-          {/* BODY */}
-          <div>
-            {/* BODY HEADER */}
-            <div className='flex justify-between items-center mb-6 px-7 mt-5'>
+          {/* BODY - Flexible height with overflow management */}
+          <div className='flex-1 flex flex-col min-h-0'>
+            {/* BODY HEADER - Fixed height */}
+            <div className='flex-shrink-0 flex justify-between items-center mb-6 px-7 mt-5'>
               <div className='text-lg font-medium'>
                 <p className='text-xs text-gray-700 dark:text-gray-300'>
                   Value
@@ -88,53 +88,57 @@ const CardSalesSummary = () => {
                 <option value='monthly'>Monthly</option>
               </select>
             </div>
-            {/* CHART */}
-            <ResponsiveContainer width='100%' height={350} className='px-7'>
-              <BarChart
-                data={salesData}
-                margin={{ top: 0, right: 0, left: -25, bottom: 0 }}
-              >
-                <CartesianGrid strokeDasharray='' vertical={false} />
-                <XAxis
-                  dataKey='date'
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return `${date.getMonth() + 1}/${date.getDate()}`;
-                  }}
-                />
-                <YAxis
-                  tickFormatter={(value) => {
-                    return `$${(value / 1000000).toFixed(0)}m`;
-                  }}
-                  tick={{ fontSize: 12, dx: -1 }}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <Tooltip
-                  formatter={(value: number) => [
-                    `$${value.toLocaleString('en')}`,
-                  ]}
-                  labelFormatter={(label) => {
-                    const date = new Date(label);
-                    return date.toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                    });
-                  }}
-                />
-                <Bar
-                  dataKey='totalValue'
-                  fill='#3182ce'
-                  barSize={10}
-                  radius={[10, 10, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+
+            {/* CHART - Flexible height, contained within remaining space */}
+            <div className='flex-1 min-h-0 px-7'>
+              <ResponsiveContainer width='100%' height='100%'>
+                <BarChart
+                  data={salesData}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 10 }}
+                >
+                  <CartesianGrid strokeDasharray='' vertical={false} />
+                  <XAxis
+                    dataKey='date'
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return `${date.getMonth() + 1}/${date.getDate()}`;
+                    }}
+                    tick={{ fontSize: 12 }}
+                  />
+                  <YAxis
+                    tickFormatter={(value) => {
+                      return `$${(value / 1000000).toFixed(0)}m`;
+                    }}
+                    tick={{ fontSize: 12, dx: -1 }}
+                    tickLine={false}
+                    axisLine={false}
+                  />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      `$${value.toLocaleString('en')}`,
+                    ]}
+                    labelFormatter={(label) => {
+                      const date = new Date(label);
+                      return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                      });
+                    }}
+                  />
+                  <Bar
+                    dataKey='totalValue'
+                    fill='#3182ce'
+                    barSize={10}
+                    radius={[10, 10, 0, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
-          {/* FOOTER */}
-          <div>
+          {/* FOOTER - Fixed height */}
+          <div className='flex-shrink-0'>
             <hr className='border-gray-300 dark:border-gray-700' />
             <div className='flex justify-between items-center mt-6 text-sm px-7 mb-4'>
               <p>{salesData.length || 0} days</p>

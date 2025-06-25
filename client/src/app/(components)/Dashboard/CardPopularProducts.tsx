@@ -8,7 +8,7 @@ const CardPopularProducts = () => {
   console.log('popular products dashboardMetrics data', dashboardMetrics);
 
   return (
-    <div className='row-span-3 xl:row-span-6 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl pb-16'>
+    <div className='h-full md:h-[578px] row-span-3 xl:row-span-6 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl pb-16 border border-gray-200 dark:border-gray-700'>
       {isLoading ? (
         <div className='m-5 text-gray-900 dark:text-gray-100'>Loading...</div>
       ) : (
