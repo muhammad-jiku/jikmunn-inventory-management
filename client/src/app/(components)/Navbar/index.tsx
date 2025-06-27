@@ -93,7 +93,7 @@ const Navbar = () => {
         </div>
         <Link href='/settings'>
           <Settings
-            className='cursor-pointer text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800'
+            className='cursor-pointer text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-800'
             size={24}
           />
         </Link>

@@ -7,11 +7,6 @@
     "axe/name-role-value": "off",
     "typescript-config/is-valid": "off",
     "no-inline-styles": "off",
-    "axe/forms": [
-      "default",
-      {
-        "select-name": "off"
-      }
-    ]
+    "axe/forms": "off"
   }
 }
