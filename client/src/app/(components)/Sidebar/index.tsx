@@ -9,7 +9,9 @@ import {
   Layout,
   LucideIcon,
   Menu,
+  ShoppingCart,
   SlidersHorizontal,
+  TrendingUp,
   User,
 } from 'lucide-react';
 import Image from 'next/image';
@@ -146,6 +148,18 @@ const Sidebar = () => {
           href='/settings'
           icon={SlidersHorizontal}
           label='Settings'
+          isCollapsed={isSidebarCollapsed}
+        />
+        <SidebarLink
+          href='/sales'
+          icon={TrendingUp}
+          label='Sales'
+          isCollapsed={isSidebarCollapsed}
+        />
+        <SidebarLink
+          href='/purchases'
+          icon={ShoppingCart}
+          label='Purchases'
           isCollapsed={isSidebarCollapsed}
         />
         <SidebarLink

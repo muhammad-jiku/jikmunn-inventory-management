@@ -5,7 +5,6 @@ import Rating from '../Rating';
 
 const CardPopularProducts = () => {
   const { data: dashboardMetrics, isLoading } = useGetDashboardMetricsQuery();
-  console.log('popular products dashboardMetrics data', dashboardMetrics);
 
   return (
     <div className='h-full md:h-[578px] row-span-3 xl:row-span-6 bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-700/50 rounded-2xl pb-16 border border-gray-200 dark:border-gray-700'>
@@ -26,7 +25,7 @@ const CardPopularProducts = () => {
                 <div className='flex items-center gap-3'>
                   <Image
                     src={`https://s3-inventorymanagement.s3.us-east-2.amazonaws.com/product${
-                      Math.floor(Math.random() * 3) + 1
+                      (product.name.charCodeAt(0) % 3) + 1
                     }.png`}
                     alt={product.name}
                     width={48}

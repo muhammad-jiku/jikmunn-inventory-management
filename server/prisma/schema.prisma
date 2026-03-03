@@ -15,92 +15,119 @@ datasource db {
 }
 
 model Users {
-  userId String @id
-  name   String
-  email  String
+  userId    String   @id @default(uuid())
+  name      String
+  email     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("tblusers")
 }
 
 model Products {
-  productId     String      @id
+  productId     String      @id @default(uuid())
   name          String
   price         Float
   rating        Float?
   stockQuantity Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
   Sales         Sales[]
   Purchases     Purchases[]
 
+  @@index([name])
   @@map("tblproducts")
 }
 
 model Sales {
-  saleId      String   @id
+  saleId      String   @id @default(uuid())
   productId   String
   timestamp   DateTime
   quantity    Int
   unitPrice   Float
   totalAmount Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
   product     Products @relation(fields: [productId], references: [productId])
 
+  @@index([productId])
+  @@index([timestamp])
   @@map("tblsales")
 }
 
 model Purchases {
-  purchaseId String   @id
+  purchaseId String   @id @default(uuid())
   productId  String
   timestamp  DateTime
   quantity   Int
   unitCost   Float
   totalCost  Float
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   product    Products @relation(fields: [productId], references: [productId])
 
+  @@index([productId])
+  @@index([timestamp])
   @@map("tblpurchases")
 }
 
 model Expenses {
-  expenseId String   @id
+  expenseId String   @id @default(uuid())
   category  String
   amount    Float
   timestamp DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
+  @@index([category])
+  @@index([timestamp])
   @@map("tblexpenses")
 }
 
 model SalesSummary {
-  salesSummaryId   String   @id
+  salesSummaryId   String   @id @default(uuid())
   totalValue       Float
   changePercentage Float?
   date             DateTime
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   @@map("tblsalessummary")
 }
 
 model PurchaseSummary {
-  purchaseSummaryId String   @id
+  purchaseSummaryId String   @id @default(uuid())
   totalPurchased    Float
   changePercentage  Float?
   date              DateTime
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("tblpurchasesummary")
 }
 
 model ExpenseSummary {
-  expenseSummaryId  String              @id
+  expenseSummaryId  String              @id @default(uuid())
   totalExpenses     Float
   date              DateTime
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
   ExpenseByCategory ExpenseByCategory[]
 
   @@map("tblexpensesummary")
 }
 
 model ExpenseByCategory {
-  expenseByCategoryId String         @id
+  expenseByCategoryId String         @id @default(uuid())
   expenseSummaryId    String
   category            String
   amount              BigInt
   date                DateTime
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
   expenseSummary      ExpenseSummary @relation(fields: [expenseSummaryId], references: [expenseSummaryId])
 
+  @@index([category])
+  @@index([expenseSummaryId])
   @@map("tblexpensebycategory")
 }

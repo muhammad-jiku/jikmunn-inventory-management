@@ -1,9 +1,14 @@
 'use client';
 
 import {
+  Expense,
   ExpenseByCategorySummary,
+  useCreateExpenseMutation,
+  useDeleteExpenseMutation,
   useGetExpensesByCategoryQuery,
+  useUpdateExpenseMutation,
 } from '@/state/api';
+import { PlusCircleIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Cell,
@@ -14,6 +19,8 @@ import {
   Tooltip,
 } from 'recharts';
 import Header from '../(components)/Header';
+import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
+import ExpenseFormModal from '../(components)/Modal/ExpenseFormModal';
 
 type AggregatedDataItem = {
   name: string;
@@ -25,18 +32,66 @@ type AggregatedData = {
   [category: string]: AggregatedDataItem;
 };
 
+const CATEGORY_COLORS = [
+  '#0088FE',
+  '#00C49F',
+  '#FFBB28',
+  '#FF8042',
+  '#8884D8',
+  '#82CA9D',
+  '#A4DE6C',
+  '#D0ED57',
+  '#FFC658',
+  '#FF6B6B',
+];
+
 const Expenses = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
+  const [deletingExpenseId, setDeletingExpenseId] = useState<string | null>(
+    null
+  );
 
   const {
-    data: expensesData,
+    data: expensesResponse,
     isLoading,
     isError,
   } = useGetExpensesByCategoryQuery();
-  const expenses = useMemo(() => expensesData ?? [], [expensesData]);
+  const expenses = useMemo(
+    () => expensesResponse?.data ?? [],
+    [expensesResponse]
+  );
+
+  const [createExpense] = useCreateExpenseMutation();
+  const [updateExpense] = useUpdateExpenseMutation();
+  const [deleteExpense] = useDeleteExpenseMutation();
+
+  const handleCreateExpense = async (formData: {
+    category: string;
+    amount: number;
+    timestamp: string;
+  }) => {
+    await createExpense(formData);
+  };
+
+  const handleUpdateExpense = async (formData: {
+    category: string;
+    amount: number;
+    timestamp: string;
+  }) => {
+    if (!editingExpense) return;
+    await updateExpense({ id: editingExpense.expenseId, ...formData });
+  };
+
+  const handleDeleteExpense = async () => {
+    if (!deletingExpenseId) return;
+    await deleteExpense(deletingExpenseId);
+    setDeletingExpenseId(null);
+  };
 
   const parseDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -58,12 +113,14 @@ const Expenses = () => {
       .reduce((acc: AggregatedData, data: ExpenseByCategorySummary) => {
         const amount = parseInt(data.amount);
         if (!acc[data.category]) {
-          acc[data.category] = { name: data.category, amount: 0 };
-          acc[data.category].color = `#${Math.floor(
-            Math.random() * 16777215
-          ).toString(16)}`;
-          acc[data.category].amount += amount;
+          const colorIndex = Object.keys(acc).length % CATEGORY_COLORS.length;
+          acc[data.category] = {
+            name: data.category,
+            amount: 0,
+            color: CATEGORY_COLORS[colorIndex],
+          };
         }
+        acc[data.category].amount += amount;
         return acc;
       }, {});
 
@@ -82,7 +139,7 @@ const Expenses = () => {
     );
   }
 
-  if (isError || !expensesData) {
+  if (isError || !expensesResponse) {
     return (
       <div className='text-center text-red-500 dark:text-red-400 py-4'>
         Failed to fetch expenses
@@ -93,11 +150,19 @@ const Expenses = () => {
   return (
     <div>
       {/* HEADER */}
-      <div className='mb-5'>
-        <Header name='Expenses' />
-        <p className='text-sm text-gray-500 dark:text-gray-400'>
-          A visual representation of expenses over time.
-        </p>
+      <div className='mb-5 flex justify-between items-center'>
+        <div>
+          <Header name='Expenses' />
+          <p className='text-sm text-gray-500 dark:text-gray-400'>
+            A visual representation of expenses over time.
+          </p>
+        </div>
+        <button
+          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+          onClick={() => setIsCreateOpen(true)}
+        >
+          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add Expense
+        </button>
       </div>
 
       {/* FILTERS */}
@@ -154,7 +219,7 @@ const Expenses = () => {
           </div>
         </div>
         {/* PIE CHART */}
-        <div className='flex-grow bg-white dark:bg-gray-800 shadow rounded-lg p-4 md:p-6'>
+        <div className='grow bg-white dark:bg-gray-800 shadow rounded-lg p-4 md:p-6'>
           <ResponsiveContainer width='100%' height={400}>
             <PieChart>
               <Pie
@@ -184,6 +249,34 @@ const Expenses = () => {
           </ResponsiveContainer>
         </div>
       </div>
+
+      {/* CREATE MODAL */}
+      <ExpenseFormModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSubmit={handleCreateExpense}
+      />
+
+      {/* EDIT MODAL */}
+      {editingExpense && (
+        <ExpenseFormModal
+          isOpen={!!editingExpense}
+          onClose={() => setEditingExpense(null)}
+          onSubmit={handleUpdateExpense}
+          expense={editingExpense}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION */}
+      <ConfirmDialog
+        isOpen={!!deletingExpenseId}
+        title='Delete Expense'
+        message='Are you sure you want to delete this expense? This action cannot be undone.'
+        confirmLabel='Delete'
+        onConfirm={handleDeleteExpense}
+        onCancel={() => setDeletingExpenseId(null)}
+        isDestructive
+      />
     </div>
   );
 };

@@ -1,8 +1,29 @@
 import { Router } from 'express';
-import { createProduct, getProducts } from '../controllers/productControllers';
+import {
+  createProduct,
+  deleteProduct,
+  getProductById,
+  getProducts,
+  updateProduct,
+} from '../controllers/productControllers';
+import { validateBody, validateQuery } from '../middleware/validate';
+import {
+  createProductSchema,
+  paginationSchema,
+  updateProductSchema,
+} from '../schemas';
 
 const router = Router();
 
-router.route('/').post(createProduct).get(getProducts);
+router
+  .route('/')
+  .get(validateQuery(paginationSchema), getProducts)
+  .post(validateBody(createProductSchema), createProduct);
+
+router
+  .route('/:id')
+  .get(getProductById)
+  .put(validateBody(updateProductSchema), updateProduct)
+  .delete(deleteProduct);
 
 export default router;

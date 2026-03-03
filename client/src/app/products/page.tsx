@@ -1,11 +1,19 @@
 'use client';
 
-import { useCreateProductMutation, useGetProductsQuery } from '@/state/api';
-import { PlusCircleIcon, SearchIcon } from 'lucide-react';
+import {
+  Product,
+  useCreateProductMutation,
+  useDeleteProductMutation,
+  useGetProductsQuery,
+  useUpdateProductMutation,
+} from '@/state/api';
+import { EditIcon, PlusCircleIcon, SearchIcon, Trash2Icon } from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
 import Header from '../(components)/Header';
+import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
 import CreateProduct from '../(components)/Modal/CreateProduct';
+import EditProduct from '../(components)/Modal/EditProduct';
 import Rating from '../(components)/Rating';
 
 type ProductFormData = {
@@ -17,24 +25,41 @@ type ProductFormData = {
 
 const Products = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [deletingProduct, setDeletingProduct] = useState<Product | null>(null);
 
   const {
-    data: products,
+    data: productsResponse,
     isLoading,
     isError,
   } = useGetProductsQuery(searchTerm);
+  const products = productsResponse?.data;
 
   const [createProduct] = useCreateProductMutation();
+  const [updateProduct] = useUpdateProductMutation();
+  const [deleteProduct] = useDeleteProductMutation();
+
   const handleCreateProduct = async (productData: ProductFormData) => {
     await createProduct(productData);
+  };
+
+  const handleUpdateProduct = async (productData: ProductFormData) => {
+    if (!editingProduct) return;
+    await updateProduct({ id: editingProduct.productId, ...productData });
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!deletingProduct) return;
+    await deleteProduct(deletingProduct.productId);
+    setDeletingProduct(null);
   };
 
   if (isLoading) {
     return <div className='py-4'>Loading...</div>;
   }
 
-  if (isError || !products) {
+  if (isError || !productsResponse) {
     return (
       <div className='text-center text-red-500 py-4'>
         Failed to fetch products
@@ -62,27 +87,45 @@ const Products = () => {
         <Header name='Products' />
         <button
           className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
-          onClick={() => setIsModalOpen(true)}
+          onClick={() => setIsCreateModalOpen(true)}
         >
-          <PlusCircleIcon className='w-5 h-5 mr-2 !text-gray-200' /> Create
+          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200!' /> Create
           Product
         </button>
       </div>
 
       {/* BODY PRODUCTS LIST */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg-grid-cols-3 gap-10 justify-between'>
+      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-between'>
         {isLoading ? (
           <div>Loading...</div>
         ) : (
           products?.map((product) => (
             <div
               key={product.productId}
-              className='border border-gray-200 dark:border-gray-700 shadow rounded-md p-4 max-w-full w-full mx-auto bg-white dark:bg-gray-800'
+              className='border border-gray-200 dark:border-gray-700 shadow rounded-md p-4 max-w-full w-full mx-auto bg-white dark:bg-gray-800 relative group'
             >
+              {/* ACTION BUTTONS */}
+              <div className='absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity'>
+                <button
+                  onClick={() => setEditingProduct(product)}
+                  className='p-1.5 rounded bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer'
+                  title='Edit product'
+                >
+                  <EditIcon className='w-4 h-4' />
+                </button>
+                <button
+                  onClick={() => setDeletingProduct(product)}
+                  className='p-1.5 rounded bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800 cursor-pointer'
+                  title='Delete product'
+                >
+                  <Trash2Icon className='w-4 h-4' />
+                </button>
+              </div>
+
               <div className='flex flex-col items-center'>
                 <Image
                   src={`https://s3-inventorymanagement.s3.us-east-2.amazonaws.com/product${
-                    Math.floor(Math.random() * 3) + 1
+                    (product.name.charCodeAt(0) % 3) + 1
                   }.png`}
                   alt={product.name}
                   width={150}
@@ -109,11 +152,32 @@ const Products = () => {
         )}
       </div>
 
-      {/* MODAL */}
+      {/* CREATE MODAL */}
       <CreateProduct
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onCreate={handleCreateProduct}
+      />
+
+      {/* EDIT MODAL */}
+      {editingProduct && (
+        <EditProduct
+          isOpen={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          onUpdate={handleUpdateProduct}
+          product={editingProduct}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION */}
+      <ConfirmDialog
+        isOpen={!!deletingProduct}
+        title='Delete Product'
+        message={`Are you sure you want to delete "${deletingProduct?.name}"? This action cannot be undone.`}
+        confirmLabel='Delete'
+        onConfirm={handleDeleteProduct}
+        onCancel={() => setDeletingProduct(null)}
+        isDestructive
       />
     </div>
   );

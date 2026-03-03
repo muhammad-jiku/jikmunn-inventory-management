@@ -12,7 +12,6 @@ import {
 
 const CardPurchaseSummary = () => {
   const { data, isLoading } = useGetDashboardMetricsQuery();
-  console.log('purchase dashboardMetrics data', data);
 
   const purchaseData = data?.purchaseSummary || [];
   const lastDataPoint = purchaseData[purchaseData.length - 1] || null;

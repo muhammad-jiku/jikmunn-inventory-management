@@ -1,24 +1,84 @@
 'use client';
 
-import { useGetUsersQuery } from '@/state/api';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import { dataGridClassName, dataGridDarkModeSx } from '@/lib/dataGridStyles';
+import {
+  User,
+  useCreateUserMutation,
+  useDeleteUserMutation,
+  useGetUsersQuery,
+  useUpdateUserMutation,
+} from '@/state/api';
+import { DataGrid, GridActionsCellItem, GridColDef } from '@mui/x-data-grid';
+import { EditIcon, PlusCircleIcon, Trash2Icon } from 'lucide-react';
+import { useState } from 'react';
 import Header from '../(components)/Header';
-
-const columns: GridColDef[] = [
-  { field: 'userId', headerName: 'ID', width: 90 },
-  { field: 'name', headerName: 'Name', width: 200 },
-  { field: 'email', headerName: 'Email', width: 200 },
-];
+import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
+import UserFormModal from '../(components)/Modal/UserFormModal';
 
 const Users = () => {
-  const { data: users, isError, isLoading } = useGetUsersQuery();
-  console.log('users', users);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [deletingUser, setDeletingUser] = useState<User | null>(null);
+
+  const { data: usersResponse, isError, isLoading } = useGetUsersQuery();
+  const users = usersResponse?.data;
+
+  const [createUser] = useCreateUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+
+  const handleCreateUser = async (formData: {
+    name: string;
+    email: string;
+  }) => {
+    await createUser(formData);
+  };
+
+  const handleUpdateUser = async (formData: {
+    name: string;
+    email: string;
+  }) => {
+    if (!editingUser) return;
+    await updateUser({ id: editingUser.userId, ...formData });
+  };
+
+  const handleDeleteUser = async () => {
+    if (!deletingUser) return;
+    await deleteUser(deletingUser.userId);
+    setDeletingUser(null);
+  };
+
+  const columns: GridColDef[] = [
+    { field: 'userId', headerName: 'ID', width: 90 },
+    { field: 'name', headerName: 'Name', width: 200 },
+    { field: 'email', headerName: 'Email', width: 200 },
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
+      width: 100,
+      getActions: (params) => [
+        <GridActionsCellItem
+          key='edit'
+          icon={<EditIcon className='w-4 h-4' />}
+          label='Edit'
+          onClick={() => setEditingUser(params.row as User)}
+        />,
+        <GridActionsCellItem
+          key='delete'
+          icon={<Trash2Icon className='w-4 h-4 text-red-500' />}
+          label='Delete'
+          onClick={() => setDeletingUser(params.row as User)}
+        />,
+      ],
+    },
+  ];
 
   if (isLoading) {
     return <div className='py-4'>Loading...</div>;
   }
 
-  if (isError || !users) {
+  if (isError || !usersResponse) {
     return (
       <div className='text-center text-red-500 py-4'>Failed to fetch users</div>
     );
@@ -26,10 +86,18 @@ const Users = () => {
 
   return (
     <div className='flex flex-col'>
-      <Header name='Users' />
+      <div className='flex justify-between items-center'>
+        <Header name='Users' />
+        <button
+          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+          onClick={() => setIsCreateOpen(true)}
+        >
+          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add User
+        </button>
+      </div>
       <div className='mt-5'>
         <DataGrid
-          rows={users}
+          rows={users ?? []}
           columns={columns}
           getRowId={(row) => row.userId}
           checkboxSelection
@@ -38,101 +106,38 @@ const Users = () => {
           disableColumnResize
           disableColumnSelector
           autoHeight
-          className='bg-white dark:bg-gray-800 shadow rounded-lg border border-gray-200 dark:border-gray-700 !text-gray-700 dark:!text-gray-200'
-          sx={{
-            // Prevent extra columns
-            '& .MuiDataGrid-main': {
-              overflow: 'hidden',
-            },
-            '& .MuiDataGrid-virtualScroller': {
-              overflow: 'hidden',
-            },
-            '& .MuiDataGrid-filler': {
-              backgroundColor: 'rgb(249 250 251)', // bg-gray-50
-            },
-            '.dark & .MuiDataGrid-filler': {
-              backgroundColor: 'rgb(55 65 81)', // bg-gray-700
-            },
-            // Light mode styles
-            '& .MuiDataGrid-root': {
-              backgroundColor: 'white',
-            },
-            '& .MuiDataGrid-cell': {
-              color: 'rgb(55 65 81)', // text-gray-700
-            },
-            '& .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'rgb(249 250 251)', // bg-gray-50
-              color: 'rgb(55 65 81)',
-            },
-            '& .MuiDataGrid-footerContainer': {
-              backgroundColor: 'rgb(249 250 251)',
-              color: 'rgb(55 65 81)',
-            },
-            '& .MuiTablePagination-root': {
-              color: 'rgb(55 65 81)',
-            },
-            // Dark mode styles
-            '.dark &.MuiDataGrid-root': {
-              backgroundColor: 'rgb(31 41 55)', // bg-gray-800
-              color: 'rgb(229 231 235)', // text-gray-200
-            },
-            '.dark & .MuiDataGrid-cell': {
-              color: 'rgb(229 231 235)',
-              borderColor: 'rgb(75 85 99)', // border-gray-600
-            },
-            '.dark & .MuiDataGrid-columnHeaders': {
-              backgroundColor: 'rgb(55 65 81) !important', // bg-gray-700
-              color: 'rgb(229 231 235) !important',
-              borderColor: 'rgb(75 85 99) !important',
-            },
-            '.dark & .MuiDataGrid-columnHeader': {
-              color: 'rgb(229 231 235) !important',
-              backgroundColor: 'rgb(55 65 81) !important',
-            },
-            '.dark & .MuiDataGrid-columnHeaderTitle': {
-              color: 'rgb(229 231 235) !important',
-            },
-            '.dark & .MuiDataGrid-footerContainer': {
-              backgroundColor: 'rgb(55 65 81) !important',
-              color: 'rgb(229 231 235) !important',
-              borderColor: 'rgb(75 85 99)',
-            },
-            '.dark & .MuiTablePagination-root': {
-              color: 'rgb(229 231 235) !important',
-            },
-            '.dark & .MuiTablePagination-selectLabel': {
-              color: 'rgb(229 231 235) !important',
-            },
-            '.dark & .MuiTablePagination-displayedRows': {
-              color: 'rgb(229 231 235) !important',
-            },
-            '.dark & .MuiIconButton-root': {
-              color: 'rgb(229 231 235) !important',
-            },
-            '.dark & .MuiDataGrid-row': {
-              borderColor: 'rgb(75 85 99)',
-              '&:hover': {
-                backgroundColor: 'rgb(55 65 81)',
-              },
-            },
-            '.dark & .MuiDataGrid-row.Mui-selected': {
-              backgroundColor: 'rgb(55 65 81)',
-            },
-            '.dark & .MuiCheckbox-root': {
-              color: 'rgb(229 231 235)',
-            },
-            '.dark & .MuiDataGrid-iconSeparator': {
-              color: 'rgb(156 163 175)',
-            },
-            '.dark & .MuiDataGrid-menuIcon': {
-              color: 'rgb(229 231 235)',
-            },
-            '.dark & .MuiDataGrid-sortIcon': {
-              color: 'rgb(229 231 235)',
-            },
-          }}
+          className={dataGridClassName}
+          sx={dataGridDarkModeSx}
         />
       </div>
+
+      {/* CREATE MODAL */}
+      <UserFormModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onSubmit={handleCreateUser}
+      />
+
+      {/* EDIT MODAL */}
+      {editingUser && (
+        <UserFormModal
+          isOpen={!!editingUser}
+          onClose={() => setEditingUser(null)}
+          onSubmit={handleUpdateUser}
+          user={editingUser}
+        />
+      )}
+
+      {/* DELETE CONFIRMATION */}
+      <ConfirmDialog
+        isOpen={!!deletingUser}
+        title='Delete User'
+        message={`Are you sure you want to delete "${deletingUser?.name}"? This action cannot be undone.`}
+        confirmLabel='Delete'
+        onConfirm={handleDeleteUser}
+        onCancel={() => setDeletingUser(null)}
+        isDestructive
+      />
     </div>
   );
 };

@@ -1,5 +1,4 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
-import { v4 } from 'uuid';
 import Header from '../Header';
 
 type ProductFormData = {
@@ -20,13 +19,14 @@ const CreateProduct = ({
   onClose,
   onCreate,
 }: CreateProductModalProps) => {
-  const [formData, setFormData] = useState({
-    productId: v4(),
+  const initialFormState = {
     name: '',
     price: 0,
     stockQuantity: 0,
     rating: 0,
-  });
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -42,6 +42,7 @@ const CreateProduct = ({
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     onCreate(formData);
+    setFormData(initialFormState);
     onClose();
   };
 
