@@ -15,31 +15,36 @@ datasource db {
 }
 
 model Users {
-  userId    String   @id @default(uuid())
+  userId    String     @id @default(uuid())
   name      String
-  email     String   @unique
+  email     String     @unique
   password  String
-  role      String   @default("viewer")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  role      String     @default("viewer")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  AuditLog  AuditLog[]
 
   @@index([email])
   @@map("tblusers")
 }
 
 model Products {
-  productId      String      @id @default(uuid())
+  productId      String           @id @default(uuid())
   name           String
   price          Float
   rating         Float?
   stockQuantity  Int
-  stockThreshold Int         @default(10)
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
+  stockThreshold Int              @default(10)
+  barcode        String?          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
   Sales          Sales[]
   Purchases      Purchases[]
+  OrderItems     OrderItem[]
+  WarehouseStock WarehouseStock[]
 
   @@index([name])
+  @@index([barcode])
   @@map("tblproducts")
 }
 
@@ -60,17 +65,20 @@ model Sales {
 }
 
 model Purchases {
-  purchaseId String   @id @default(uuid())
+  purchaseId String    @id @default(uuid())
   productId  String
+  supplierId String?
   timestamp  DateTime
   quantity   Int
   unitCost   Float
   totalCost  Float
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  product    Products @relation(fields: [productId], references: [productId])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  product    Products  @relation(fields: [productId], references: [productId])
+  supplier   Supplier? @relation(fields: [supplierId], references: [supplierId])
 
   @@index([productId])
+  @@index([supplierId])
   @@index([timestamp])
   @@map("tblpurchases")
 }
@@ -134,4 +142,125 @@ model ExpenseByCategory {
   @@index([category])
   @@index([expenseSummaryId])
   @@map("tblexpensebycategory")
+}
+
+// ── Phase 8 Models ──
+
+model AuditLog {
+  auditLogId String   @id @default(uuid())
+  userId     String?
+  action     String // CREATE, UPDATE, DELETE
+  entity     String // Products, Users, Sales, etc.
+  entityId   String
+  changes    Json? // { before: {...}, after: {...} }
+  ipAddress  String?
+  createdAt  DateTime @default(now())
+  user       Users?   @relation(fields: [userId], references: [userId])
+
+  @@index([userId])
+  @@index([entity, entityId])
+  @@index([createdAt])
+  @@map("tblauditlog")
+}
+
+model Supplier {
+  supplierId String      @id @default(uuid())
+  name       String
+  contact    String?
+  email      String?
+  address    String?
+  notes      String?
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  Purchases  Purchases[]
+
+  @@index([name])
+  @@map("tblsuppliers")
+}
+
+model Order {
+  orderId   String      @id @default(uuid())
+  status    String      @default("pending") // pending, confirmed, shipped, delivered, cancelled
+  notes     String?
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  items     OrderItem[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("tblorders")
+}
+
+model OrderItem {
+  orderItemId String   @id @default(uuid())
+  orderId     String
+  productId   String
+  quantity    Int
+  unitPrice   Float
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  order       Order    @relation(fields: [orderId], references: [orderId], onDelete: Cascade)
+  product     Products @relation(fields: [productId], references: [productId])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("tblorderitems")
+}
+
+model Warehouse {
+  warehouseId String           @id @default(uuid())
+  name        String
+  location    String?
+  capacity    Int?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  stocks      WarehouseStock[]
+
+  @@index([name])
+  @@map("tblwarehouses")
+}
+
+model WarehouseStock {
+  warehouseStockId String    @id @default(uuid())
+  warehouseId      String
+  productId        String
+  quantity         Int       @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  warehouse        Warehouse @relation(fields: [warehouseId], references: [warehouseId], onDelete: Cascade)
+  product          Products  @relation(fields: [productId], references: [productId])
+
+  @@unique([warehouseId, productId])
+  @@index([warehouseId])
+  @@index([productId])
+  @@map("tblwarehousestock")
+}
+
+model ImportHistory {
+  importId   String   @id @default(uuid())
+  fileName   String
+  entity     String // products, users, etc.
+  totalRows  Int
+  successful Int
+  failed     Int
+  errors     Json? // Array of row-level error messages
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("tblimporthistory")
+}
+
+model ApiMetric {
+  metricId   String   @id @default(uuid())
+  endpoint   String
+  method     String
+  statusCode Int
+  latencyMs  Int
+  userId     String?
+  createdAt  DateTime @default(now())
+
+  @@index([endpoint])
+  @@index([createdAt])
+  @@map("tblapimetrics")
 }

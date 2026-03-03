@@ -1,0 +1,120 @@
+{
+  "common": {
+    "appName": "jikmunn STOCK",
+    "loading": "読み込み中...",
+    "error": "エラーが発生しました",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "create": "作成",
+    "delete": "削除",
+    "edit": "編集",
+    "search": "検索...",
+    "noData": "データがありません",
+    "previous": "前へ",
+    "next": "次へ",
+    "page": "ページ {current} / {total}",
+    "actions": "アクション",
+    "confirm": "確認",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "inventory": "在庫",
+    "products": "商品",
+    "users": "ユーザー",
+    "settings": "設定",
+    "sales": "販売",
+    "purchases": "仕入",
+    "expenses": "経費",
+    "suppliers": "仕入先",
+    "orders": "注文",
+    "warehouses": "倉庫",
+    "barcodeScanner": "バーコードスキャナー",
+    "reports": "レポート",
+    "auditLog": "監査ログ",
+    "bulkImport": "一括インポート",
+    "apiMetrics": "APIメトリクス"
+  },
+  "dashboard": {
+    "title": "ダッシュボード",
+    "popularProducts": "人気商品",
+    "salesSummary": "販売概要",
+    "purchaseSummary": "仕入概要",
+    "expenseSummary": "経費概要"
+  },
+  "products": {
+    "title": "商品",
+    "addProduct": "商品を追加",
+    "editProduct": "商品を編集",
+    "name": "名前",
+    "price": "価格",
+    "stock": "在庫数",
+    "rating": "評価",
+    "noProducts": "商品が見つかりません"
+  },
+  "suppliers": {
+    "title": "仕入先",
+    "addSupplier": "仕入先を追加",
+    "editSupplier": "仕入先を編集",
+    "name": "名前",
+    "contact": "連絡先",
+    "email": "メール",
+    "address": "住所",
+    "notes": "メモ",
+    "noSuppliers": "仕入先が見つかりません"
+  },
+  "orders": {
+    "title": "注文",
+    "newOrder": "新規注文",
+    "status": "ステータス",
+    "items": "商品",
+    "pending": "保留中",
+    "confirmed": "確認済み",
+    "shipped": "発送済み",
+    "delivered": "配達済み",
+    "cancelled": "キャンセル",
+    "allStatuses": "すべてのステータス",
+    "noOrders": "注文が見つかりません"
+  },
+  "warehouses": {
+    "title": "倉庫",
+    "addWarehouse": "倉庫を追加",
+    "editWarehouse": "倉庫を編集",
+    "transferStock": "在庫を移動",
+    "updateStock": "在庫を更新",
+    "name": "名前",
+    "location": "場所",
+    "capacity": "容量",
+    "noWarehouses": "倉庫が見つかりません"
+  },
+  "auditLog": {
+    "title": "監査ログ",
+    "entity": "エンティティ",
+    "action": "アクション",
+    "user": "ユーザー",
+    "timestamp": "タイムスタンプ",
+    "noLogs": "監査ログが見つかりません"
+  },
+  "metrics": {
+    "title": "APIメトリクスダッシュボード",
+    "totalRequests": "総リクエスト数",
+    "avgLatency": "平均レイテンシ",
+    "errorRate": "エラー率",
+    "activeUsers": "アクティブユーザー",
+    "topEndpoints": "上位エンドポイント",
+    "statusCodes": "ステータスコード"
+  },
+  "import": {
+    "title": "一括インポート / エクスポート",
+    "importProducts": "商品をインポート",
+    "dragDrop": "JSONまたはCSVファイルをドラッグ＆ドロップ、またはクリックして選択",
+    "import": "インポート",
+    "importing": "インポート中...",
+    "template": "テンプレート",
+    "history": "インポート履歴",
+    "result": "インポート結果",
+    "successful": "{count} 件成功",
+    "failed": "{count} 件失敗"
+  }
+}

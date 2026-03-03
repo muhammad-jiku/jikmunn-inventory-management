@@ -1,0 +1,120 @@
+{
+  "common": {
+    "appName": "jikmunn STOCK",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "create": "Create",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search...",
+    "noData": "No data available",
+    "previous": "Previous",
+    "next": "Next",
+    "page": "Page {current} of {total}",
+    "actions": "Actions",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "products": "Products",
+    "users": "Users",
+    "settings": "Settings",
+    "sales": "Sales",
+    "purchases": "Purchases",
+    "expenses": "Expenses",
+    "suppliers": "Suppliers",
+    "orders": "Orders",
+    "warehouses": "Warehouses",
+    "barcodeScanner": "Barcode Scanner",
+    "reports": "Reports",
+    "auditLog": "Audit Log",
+    "bulkImport": "Bulk Import",
+    "apiMetrics": "API Metrics"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "popularProducts": "Popular Products",
+    "salesSummary": "Sales Summary",
+    "purchaseSummary": "Purchase Summary",
+    "expenseSummary": "Expense Summary"
+  },
+  "products": {
+    "title": "Products",
+    "addProduct": "Add Product",
+    "editProduct": "Edit Product",
+    "name": "Name",
+    "price": "Price",
+    "stock": "Stock",
+    "rating": "Rating",
+    "noProducts": "No products found"
+  },
+  "suppliers": {
+    "title": "Suppliers",
+    "addSupplier": "Add Supplier",
+    "editSupplier": "Edit Supplier",
+    "name": "Name",
+    "contact": "Contact",
+    "email": "Email",
+    "address": "Address",
+    "notes": "Notes",
+    "noSuppliers": "No suppliers found"
+  },
+  "orders": {
+    "title": "Orders",
+    "newOrder": "New Order",
+    "status": "Status",
+    "items": "Items",
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "shipped": "Shipped",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled",
+    "allStatuses": "All Statuses",
+    "noOrders": "No orders found"
+  },
+  "warehouses": {
+    "title": "Warehouses",
+    "addWarehouse": "Add Warehouse",
+    "editWarehouse": "Edit Warehouse",
+    "transferStock": "Transfer Stock",
+    "updateStock": "Update Stock",
+    "name": "Name",
+    "location": "Location",
+    "capacity": "Capacity",
+    "noWarehouses": "No warehouses found"
+  },
+  "auditLog": {
+    "title": "Audit Log",
+    "entity": "Entity",
+    "action": "Action",
+    "user": "User",
+    "timestamp": "Timestamp",
+    "noLogs": "No audit log entries found"
+  },
+  "metrics": {
+    "title": "API Metrics Dashboard",
+    "totalRequests": "Total Requests",
+    "avgLatency": "Avg Latency",
+    "errorRate": "Error Rate",
+    "activeUsers": "Active Users",
+    "topEndpoints": "Top Endpoints",
+    "statusCodes": "Status Codes"
+  },
+  "import": {
+    "title": "Bulk Import / Export",
+    "importProducts": "Import Products",
+    "dragDrop": "Drag & drop a JSON or CSV file, or click to browse",
+    "import": "Import",
+    "importing": "Importing...",
+    "template": "Template",
+    "history": "Import History",
+    "result": "Import Result",
+    "successful": "{count} successful",
+    "failed": "{count} failed"
+  }
+}

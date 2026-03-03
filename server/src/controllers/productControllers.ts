@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 import { sendError, sendPaginated } from '../lib/apiResponse';
 import prisma from '../lib/prisma';
 
+/**
+ * List products with optional search and pagination.
+ * @param req - Express request (query: search?, page?, limit?)
+ * @param res - Express response with paginated product list
+ */
 export const getProducts = async (
   req: Request,
   res: Response
@@ -25,6 +30,11 @@ export const getProducts = async (
   }
 };
 
+/**
+ * Retrieve a single product by its ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with product or 404
+ */
 export const getProductById = async (
   req: Request,
   res: Response
@@ -46,6 +56,11 @@ export const getProductById = async (
   }
 };
 
+/**
+ * Create a new product.
+ * @param req - Express request (body: name, price, rating?, stockQuantity, stockThreshold?)
+ * @param res - Express response with 201 and created product
+ */
 export const createProduct = async (
   req: Request,
   res: Response
@@ -67,6 +82,11 @@ export const createProduct = async (
   }
 };
 
+/**
+ * Update an existing product by ID.
+ * @param req - Express request (params: id, body: name?, price?, rating?, stockQuantity?, stockThreshold?)
+ * @param res - Express response with updated product or 404
+ */
 export const updateProduct = async (
   req: Request,
   res: Response
@@ -95,6 +115,37 @@ export const updateProduct = async (
   }
 };
 
+/**
+ * Look up a product by its barcode.
+ * @param req - Express request (params: barcode)
+ * @param res - Express response with product or 404
+ */
+export const getProductByBarcode = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const { barcode } = req.params;
+    const product = await prisma.products.findUnique({
+      where: { barcode },
+    });
+
+    if (!product) {
+      sendError(res, 404, 'No product found with this barcode');
+      return;
+    }
+
+    res.json(product);
+  } catch (_error) {
+    sendError(res, 500, 'Error looking up barcode');
+  }
+};
+
+/**
+ * Delete a product by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with 204 on success or 404
+ */
 export const deleteProduct = async (
   req: Request,
   res: Response

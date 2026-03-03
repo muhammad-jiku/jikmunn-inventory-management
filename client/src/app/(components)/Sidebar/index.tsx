@@ -3,17 +3,24 @@
 import { useAppDispatch, useAppSelector } from '@/app/redux';
 import { setIsSidebarCollapsed } from '@/state';
 import {
+  Activity,
   Archive,
+  BarChart3,
   CircleDollarSign,
   Clipboard,
+  ClipboardList,
   FileBarChart,
+  FileUp,
   Layout,
   LucideIcon,
   Menu,
+  ScanBarcode,
   ShoppingCart,
   SlidersHorizontal,
   TrendingUp,
+  Truck,
   User,
+  Warehouse,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -114,7 +121,7 @@ const Sidebar = () => {
           }`}
         >
           <Image
-            src='https://s3-inventorymanagement.s3.us-east-2.amazonaws.com/logo.png'
+            src='/images/logo.svg'
             alt='jikmunn-logo'
             width={27}
             height={27}
@@ -195,9 +202,58 @@ const Sidebar = () => {
             onClick={handleMobileLinkClick}
           />
           <SidebarLink
+            href='/suppliers'
+            icon={Truck}
+            label='Suppliers'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/orders'
+            icon={ClipboardList}
+            label='Orders'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/warehouses'
+            icon={Warehouse}
+            label='Warehouses'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/barcode-scanner'
+            icon={ScanBarcode}
+            label='Barcode Scanner'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
             href='/reports'
             icon={FileBarChart}
             label='Reports'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/audit-log'
+            icon={Activity}
+            label='Audit Log'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/bulk-import'
+            icon={FileUp}
+            label='Bulk Import'
+            isCollapsed={isSidebarCollapsed}
+            onClick={handleMobileLinkClick}
+          />
+          <SidebarLink
+            href='/api-metrics'
+            icon={BarChart3}
+            label='API Metrics'
             isCollapsed={isSidebarCollapsed}
             onClick={handleMobileLinkClick}
           />

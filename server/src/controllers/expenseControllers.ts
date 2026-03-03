@@ -2,6 +2,12 @@ import { Request, Response } from 'express';
 import { sendError, sendPaginated } from '../lib/apiResponse';
 import prisma from '../lib/prisma';
 
+/**
+ * List expenses grouped by category with pagination.
+ * Converts Decimal amount to string for JSON serialization.
+ * @param req - Express request (query: page?, limit?)
+ * @param res - Express response with paginated expense-by-category list
+ */
 export const getExpensesByCategory = async (
   req: Request,
   res: Response
@@ -31,6 +37,11 @@ export const getExpensesByCategory = async (
   }
 };
 
+/**
+ * Retrieve a single expense record by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with expense or 404
+ */
 export const getExpenseById = async (
   req: Request,
   res: Response
@@ -52,6 +63,11 @@ export const getExpenseById = async (
   }
 };
 
+/**
+ * Create a new expense record.
+ * @param req - Express request (body: category, amount, timestamp?)
+ * @param res - Express response with 201 and created expense
+ */
 export const createExpense = async (
   req: Request,
   res: Response
@@ -71,6 +87,11 @@ export const createExpense = async (
   }
 };
 
+/**
+ * Update an existing expense by ID.
+ * @param req - Express request (params: id, body: category?, amount?, timestamp?)
+ * @param res - Express response with updated expense or 404
+ */
 export const updateExpense = async (
   req: Request,
   res: Response
@@ -103,6 +124,11 @@ export const updateExpense = async (
   }
 };
 
+/**
+ * Delete an expense by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with 204 on success or 404
+ */
 export const deleteExpense = async (
   req: Request,
   res: Response

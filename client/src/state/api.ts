@@ -221,6 +221,133 @@ export interface PaginatedResponse<T> {
   pagination: PaginationInfo;
 }
 
+/* ── Supplier Types ── */
+export interface Supplier {
+  supplierId: string;
+  name: string;
+  contact?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface NewSupplier {
+  name: string;
+  contact?: string;
+  email?: string;
+  address?: string;
+  notes?: string;
+}
+
+/* ── Order Types ── */
+export interface OrderItem {
+  orderItemId: string;
+  orderId: string;
+  productId: string;
+  quantity: number;
+  unitPrice: number;
+  product?: Product;
+}
+
+export interface Order {
+  orderId: string;
+  status: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+  items: OrderItem[];
+}
+
+export interface NewOrder {
+  notes?: string;
+  items: { productId: string; quantity: number; unitPrice: number }[];
+}
+
+/* ── Warehouse Types ── */
+export interface WarehouseStock {
+  warehouseStockId: string;
+  warehouseId: string;
+  productId: string;
+  quantity: number;
+  product?: Product;
+}
+
+export interface Warehouse {
+  warehouseId: string;
+  name: string;
+  location?: string;
+  capacity?: number;
+  createdAt: string;
+  updatedAt: string;
+  stocks: WarehouseStock[];
+}
+
+export interface NewWarehouse {
+  name: string;
+  location?: string;
+  capacity?: number;
+}
+
+export interface TransferStockRequest {
+  fromWarehouseId: string;
+  toWarehouseId: string;
+  productId: string;
+  quantity: number;
+}
+
+/* ── Audit Log Types ── */
+export interface AuditLog {
+  auditLogId: string;
+  userId?: string;
+  action: string;
+  entity: string;
+  entityId: string;
+  changes?: Record<string, unknown>;
+  ipAddress?: string;
+  createdAt: string;
+  user?: { name: string; email: string };
+}
+
+/* ── Import Types ── */
+export interface ImportResult {
+  total: number;
+  successful: number;
+  failed: number;
+  errors: { row: number; message: string }[];
+  importHistoryId: string;
+}
+
+export interface ImportHistory {
+  importHistoryId: string;
+  fileName: string;
+  entity: string;
+  totalRows: number;
+  successful: number;
+  failed: number;
+  errors?: unknown;
+  userId?: string;
+  createdAt: string;
+}
+
+/* ── API Metrics Types ── */
+export interface ApiMetricsData {
+  period: { hours: number; since: string };
+  totalRequests: number;
+  averageLatencyMs: number;
+  errorCount: number;
+  errorRate: number;
+  topEndpoints: {
+    endpoint: string;
+    method: string;
+    requests: number;
+    avgLatencyMs: number;
+  }[];
+  statusCodes: { statusCode: number; count: number }[];
+  topUsers: { userId: string; requests: number }[];
+}
+
 /* ── Custom baseQuery with auth token injection and auto-refresh ── */
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
@@ -285,6 +412,12 @@ export const api = createApi({
     'Expenses',
     'Sales',
     'Purchases',
+    'Suppliers',
+    'Orders',
+    'Warehouses',
+    'AuditLogs',
+    'ImportHistory',
+    'Metrics',
   ],
   endpoints: (build) => ({
     /* ── Auth ── */
@@ -519,6 +652,183 @@ export const api = createApi({
       }),
       invalidatesTags: ['Purchases', 'DashboardMetrics'],
     }),
+
+    /* ── Suppliers ── */
+    getSuppliers: build.query<
+      PaginatedResponse<Supplier>,
+      { search?: string } | void
+    >({
+      query: (params) => ({
+        url: '/suppliers',
+        params: { limit: 100, ...(params || {}) },
+      }),
+      providesTags: ['Suppliers'],
+    }),
+    getSupplierById: build.query<Supplier, string>({
+      query: (id) => `/suppliers/${id}`,
+      providesTags: ['Suppliers'],
+    }),
+    createSupplier: build.mutation<Supplier, NewSupplier>({
+      query: (body) => ({ url: '/suppliers', method: 'POST', body }),
+      invalidatesTags: ['Suppliers'],
+    }),
+    updateSupplier: build.mutation<
+      Supplier,
+      { id: string } & Partial<NewSupplier>
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/suppliers/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Suppliers'],
+    }),
+    deleteSupplier: build.mutation<void, string>({
+      query: (id) => ({ url: `/suppliers/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Suppliers'],
+    }),
+
+    /* ── Orders ── */
+    getOrders: build.query<
+      PaginatedResponse<Order>,
+      { status?: string } | void
+    >({
+      query: (params) => ({
+        url: '/orders',
+        params: { limit: 100, ...(params || {}) },
+      }),
+      providesTags: ['Orders'],
+    }),
+    getOrderById: build.query<Order, string>({
+      query: (id) => `/orders/${id}`,
+      providesTags: ['Orders'],
+    }),
+    createOrder: build.mutation<Order, NewOrder>({
+      query: (body) => ({ url: '/orders', method: 'POST', body }),
+      invalidatesTags: ['Orders'],
+    }),
+    updateOrderStatus: build.mutation<Order, { id: string; status: string }>({
+      query: ({ id, status }) => ({
+        url: `/orders/${id}/status`,
+        method: 'PATCH',
+        body: { status },
+      }),
+      invalidatesTags: ['Orders', 'Products'],
+    }),
+    deleteOrder: build.mutation<void, string>({
+      query: (id) => ({ url: `/orders/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Orders'],
+    }),
+
+    /* ── Warehouses ── */
+    getWarehouses: build.query<
+      PaginatedResponse<Warehouse>,
+      { search?: string } | void
+    >({
+      query: (params) => ({
+        url: '/warehouses',
+        params: { limit: 100, ...(params || {}) },
+      }),
+      providesTags: ['Warehouses'],
+    }),
+    getWarehouseById: build.query<Warehouse, string>({
+      query: (id) => `/warehouses/${id}`,
+      providesTags: ['Warehouses'],
+    }),
+    createWarehouse: build.mutation<Warehouse, NewWarehouse>({
+      query: (body) => ({ url: '/warehouses', method: 'POST', body }),
+      invalidatesTags: ['Warehouses'],
+    }),
+    updateWarehouse: build.mutation<
+      Warehouse,
+      { id: string } & Partial<NewWarehouse>
+    >({
+      query: ({ id, ...body }) => ({
+        url: `/warehouses/${id}`,
+        method: 'PUT',
+        body,
+      }),
+      invalidatesTags: ['Warehouses'],
+    }),
+    deleteWarehouse: build.mutation<void, string>({
+      query: (id) => ({ url: `/warehouses/${id}`, method: 'DELETE' }),
+      invalidatesTags: ['Warehouses'],
+    }),
+    updateWarehouseStock: build.mutation<
+      WarehouseStock,
+      { warehouseId: string; productId: string; quantity: number }
+    >({
+      query: ({ warehouseId, productId, quantity }) => ({
+        url: `/warehouses/${warehouseId}/stock/${productId}`,
+        method: 'PUT',
+        body: { quantity },
+      }),
+      invalidatesTags: ['Warehouses', 'Products'],
+    }),
+    transferStock: build.mutation<
+      { source: WarehouseStock; destination: WarehouseStock },
+      TransferStockRequest
+    >({
+      query: (body) => ({
+        url: '/warehouses/transfer',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['Warehouses'],
+    }),
+
+    /* ── Audit Logs ── */
+    getAuditLogs: build.query<
+      PaginatedResponse<AuditLog>,
+      {
+        entity?: string;
+        action?: string;
+        userId?: string;
+        page?: number;
+      } | void
+    >({
+      query: (params) => ({
+        url: '/audit-logs',
+        params: { limit: 50, ...(params || {}) },
+      }),
+      providesTags: ['AuditLogs'],
+    }),
+
+    /* ── Import / Export ── */
+    importProducts: build.mutation<ImportResult, { products: NewProduct[] }>({
+      query: (body) => ({ url: '/imports/products', method: 'POST', body }),
+      invalidatesTags: ['Products', 'ImportHistory'],
+    }),
+    bulkUpdateStock: build.mutation<
+      { updated: number },
+      { updates: { productId: string; stockQuantity: number }[] }
+    >({
+      query: (body) => ({
+        url: '/imports/products/bulk-stock',
+        method: 'PATCH',
+        body,
+      }),
+      invalidatesTags: ['Products'],
+    }),
+    getImportHistory: build.query<PaginatedResponse<ImportHistory>, void>({
+      query: () => ({ url: '/imports/history', params: { limit: 50 } }),
+      providesTags: ['ImportHistory'],
+    }),
+
+    /* ── Barcode Lookup ── */
+    getProductByBarcode: build.query<Product, string>({
+      query: (barcode) => `/products/barcode/${barcode}`,
+      providesTags: ['Products'],
+    }),
+
+    /* ── API Metrics ── */
+    getApiMetrics: build.query<ApiMetricsData, number | void>({
+      query: (hours) => ({
+        url: '/metrics',
+        params: { hours: hours || 24 },
+      }),
+      providesTags: ['Metrics'],
+    }),
   }),
 });
 
@@ -557,4 +867,29 @@ export const {
   useCreatePurchaseMutation,
   useUpdatePurchaseMutation,
   useDeletePurchaseMutation,
+  /* Phase 8 hooks */
+  useGetSuppliersQuery,
+  useGetSupplierByIdQuery,
+  useCreateSupplierMutation,
+  useUpdateSupplierMutation,
+  useDeleteSupplierMutation,
+  useGetOrdersQuery,
+  useGetOrderByIdQuery,
+  useCreateOrderMutation,
+  useUpdateOrderStatusMutation,
+  useDeleteOrderMutation,
+  useGetWarehousesQuery,
+  useGetWarehouseByIdQuery,
+  useCreateWarehouseMutation,
+  useUpdateWarehouseMutation,
+  useDeleteWarehouseMutation,
+  useUpdateWarehouseStockMutation,
+  useTransferStockMutation,
+  useGetAuditLogsQuery,
+  useImportProductsMutation,
+  useBulkUpdateStockMutation,
+  useGetImportHistoryQuery,
+  useGetProductByBarcodeQuery,
+  useLazyGetProductByBarcodeQuery,
+  useGetApiMetricsQuery,
 } = api;

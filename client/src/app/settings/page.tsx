@@ -194,6 +194,39 @@ const Settings = () => {
           {isSaving ? 'Saving...' : 'Save Profile'}
         </button>
       </div>
+
+      {/* Language Settings */}
+      <div className='mt-8'>
+        <h2 className='text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3'>
+          Language / 言語 / Idioma
+        </h2>
+        <div className='bg-white dark:bg-gray-800 rounded-lg shadow p-4'>
+          <p className='text-sm text-gray-500 dark:text-gray-400 mb-3'>
+            i18n is configured with next-intl. Translation files are available
+            for English, Spanish, and Japanese.
+          </p>
+          <div className='flex gap-3'>
+            {[
+              { code: 'en', label: 'English', flag: '🇺🇸' },
+              { code: 'es', label: 'Español', flag: '🇪🇸' },
+              { code: 'ja', label: '日本語', flag: '🇯🇵' },
+            ].map((lang) => (
+              <button
+                key={lang.code}
+                className='px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:border-blue-400 transition-colors flex items-center gap-2'
+                onClick={() => {
+                  // Set locale cookie for next-intl
+                  document.cookie = `NEXT_LOCALE=${lang.code};path=/;max-age=31536000`;
+                  window.location.reload();
+                }}
+              >
+                <span>{lang.flag}</span>
+                <span>{lang.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

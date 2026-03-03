@@ -1,4 +1,6 @@
 import type { Metadata } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import { Inter } from 'next/font/google';
 import DashboardWrapper from './dashboardWrapper';
 import './globals.css';
@@ -11,15 +13,38 @@ export const metadata: Metadata = {
     'Full-stack inventory management system with dashboard analytics, product tracking, and expense monitoring.',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
+      <head>
+        <link rel='manifest' href='/manifest.json' />
+        <meta name='theme-color' content='#3b82f6' />
+        <meta name='apple-mobile-web-app-capable' content='yes' />
+        <meta name='apple-mobile-web-app-status-bar-style' content='default' />
+        <meta name='apple-mobile-web-app-title' content='jikmunn STOCK' />
+      </head>
       <body suppressHydrationWarning className={inter.className}>
-        <DashboardWrapper>{children}</DashboardWrapper>
+        <NextIntlClientProvider messages={messages}>
+          <DashboardWrapper>{children}</DashboardWrapper>
+        </NextIntlClientProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js');
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

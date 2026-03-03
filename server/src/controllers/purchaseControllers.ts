@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 import { sendError, sendPaginated } from '../lib/apiResponse';
 import prisma from '../lib/prisma';
 
+/**
+ * List purchases with product details, paginated and sorted by date desc.
+ * @param req - Express request (query: page?, limit?)
+ * @param res - Express response with paginated purchases list
+ */
 export const getPurchases = async (
   req: Request,
   res: Response
@@ -27,6 +32,11 @@ export const getPurchases = async (
   }
 };
 
+/**
+ * Retrieve a single purchase by ID with product details.
+ * @param req - Express request (params: id)
+ * @param res - Express response with purchase or 404
+ */
 export const getPurchaseById = async (
   req: Request,
   res: Response
@@ -49,6 +59,12 @@ export const getPurchaseById = async (
   }
 };
 
+/**
+ * Create a new purchase record.
+ * totalCost is computed as quantity * unitCost.
+ * @param req - Express request (body: productId, quantity, unitCost, timestamp?)
+ * @param res - Express response with 201 and created purchase
+ */
 export const createPurchase = async (
   req: Request,
   res: Response
@@ -74,6 +90,12 @@ export const createPurchase = async (
   }
 };
 
+/**
+ * Update an existing purchase by ID.
+ * Recomputes totalCost when quantity or unitCost changes.
+ * @param req - Express request (params: id, body: productId?, quantity?, unitCost?, timestamp?)
+ * @param res - Express response with updated purchase or 404
+ */
 export const updatePurchase = async (
   req: Request,
   res: Response
@@ -113,6 +135,11 @@ export const updatePurchase = async (
   }
 };
 
+/**
+ * Delete a purchase by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with 204 on success or 404
+ */
 export const deletePurchase = async (
   req: Request,
   res: Response

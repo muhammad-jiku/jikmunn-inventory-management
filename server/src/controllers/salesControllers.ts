@@ -2,6 +2,11 @@ import { Request, Response } from 'express';
 import { sendError, sendPaginated } from '../lib/apiResponse';
 import prisma from '../lib/prisma';
 
+/**
+ * List sales with product details, paginated and sorted by date desc.
+ * @param req - Express request (query: page?, limit?)
+ * @param res - Express response with paginated sales list
+ */
 export const getSales = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Number(req.query.page) || 1;
@@ -24,6 +29,11 @@ export const getSales = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Retrieve a single sale by ID with product details.
+ * @param req - Express request (params: id)
+ * @param res - Express response with sale or 404
+ */
 export const getSaleById = async (
   req: Request,
   res: Response
@@ -46,6 +56,12 @@ export const getSaleById = async (
   }
 };
 
+/**
+ * Create a new sale record.
+ * totalAmount is computed as quantity * unitPrice.
+ * @param req - Express request (body: productId, quantity, unitPrice, timestamp?)
+ * @param res - Express response with 201 and created sale
+ */
 export const createSale = async (
   req: Request,
   res: Response
@@ -71,6 +87,12 @@ export const createSale = async (
   }
 };
 
+/**
+ * Update an existing sale by ID.
+ * Recomputes totalAmount when quantity or unitPrice changes.
+ * @param req - Express request (params: id, body: productId?, quantity?, unitPrice?, timestamp?)
+ * @param res - Express response with updated sale or 404
+ */
 export const updateSale = async (
   req: Request,
   res: Response
@@ -110,6 +132,11 @@ export const updateSale = async (
   }
 };
 
+/**
+ * Delete a sale by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with 204 on success or 404
+ */
 export const deleteSale = async (
   req: Request,
   res: Response

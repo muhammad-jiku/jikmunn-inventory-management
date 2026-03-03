@@ -1,0 +1,120 @@
+{
+  "common": {
+    "appName": "jikmunn STOCK",
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "create": "Crear",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar...",
+    "noData": "No hay datos disponibles",
+    "previous": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {current} de {total}",
+    "actions": "Acciones",
+    "confirm": "Confirmar",
+    "yes": "Sí",
+    "no": "No"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "inventory": "Inventario",
+    "products": "Productos",
+    "users": "Usuarios",
+    "settings": "Configuración",
+    "sales": "Ventas",
+    "purchases": "Compras",
+    "expenses": "Gastos",
+    "suppliers": "Proveedores",
+    "orders": "Pedidos",
+    "warehouses": "Almacenes",
+    "barcodeScanner": "Escáner de Código de Barras",
+    "reports": "Informes",
+    "auditLog": "Registro de Auditoría",
+    "bulkImport": "Importación Masiva",
+    "apiMetrics": "Métricas API"
+  },
+  "dashboard": {
+    "title": "Panel",
+    "popularProducts": "Productos Populares",
+    "salesSummary": "Resumen de Ventas",
+    "purchaseSummary": "Resumen de Compras",
+    "expenseSummary": "Resumen de Gastos"
+  },
+  "products": {
+    "title": "Productos",
+    "addProduct": "Agregar Producto",
+    "editProduct": "Editar Producto",
+    "name": "Nombre",
+    "price": "Precio",
+    "stock": "Existencias",
+    "rating": "Calificación",
+    "noProducts": "No se encontraron productos"
+  },
+  "suppliers": {
+    "title": "Proveedores",
+    "addSupplier": "Agregar Proveedor",
+    "editSupplier": "Editar Proveedor",
+    "name": "Nombre",
+    "contact": "Contacto",
+    "email": "Correo Electrónico",
+    "address": "Dirección",
+    "notes": "Notas",
+    "noSuppliers": "No se encontraron proveedores"
+  },
+  "orders": {
+    "title": "Pedidos",
+    "newOrder": "Nuevo Pedido",
+    "status": "Estado",
+    "items": "Artículos",
+    "pending": "Pendiente",
+    "confirmed": "Confirmado",
+    "shipped": "Enviado",
+    "delivered": "Entregado",
+    "cancelled": "Cancelado",
+    "allStatuses": "Todos los Estados",
+    "noOrders": "No se encontraron pedidos"
+  },
+  "warehouses": {
+    "title": "Almacenes",
+    "addWarehouse": "Agregar Almacén",
+    "editWarehouse": "Editar Almacén",
+    "transferStock": "Transferir Existencias",
+    "updateStock": "Actualizar Existencias",
+    "name": "Nombre",
+    "location": "Ubicación",
+    "capacity": "Capacidad",
+    "noWarehouses": "No se encontraron almacenes"
+  },
+  "auditLog": {
+    "title": "Registro de Auditoría",
+    "entity": "Entidad",
+    "action": "Acción",
+    "user": "Usuario",
+    "timestamp": "Fecha y Hora",
+    "noLogs": "No se encontraron registros de auditoría"
+  },
+  "metrics": {
+    "title": "Panel de Métricas API",
+    "totalRequests": "Total de Solicitudes",
+    "avgLatency": "Latencia Promedio",
+    "errorRate": "Tasa de Errores",
+    "activeUsers": "Usuarios Activos",
+    "topEndpoints": "Principales Endpoints",
+    "statusCodes": "Códigos de Estado"
+  },
+  "import": {
+    "title": "Importación / Exportación Masiva",
+    "importProducts": "Importar Productos",
+    "dragDrop": "Arrastra y suelta un archivo JSON o CSV, o haz clic para buscar",
+    "import": "Importar",
+    "importing": "Importando...",
+    "template": "Plantilla",
+    "history": "Historial de Importación",
+    "result": "Resultado de Importación",
+    "successful": "{count} exitosos",
+    "failed": "{count} fallidos"
+  }
+}

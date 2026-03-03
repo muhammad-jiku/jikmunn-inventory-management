@@ -15,6 +15,11 @@ const safeUserSelect = {
   updatedAt: true,
 };
 
+/**
+ * List users with pagination (excluding password).
+ * @param req - Express request (query: page?, limit?)
+ * @param res - Express response with paginated user list
+ */
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
     const page = Number(req.query.page) || 1;
@@ -32,6 +37,11 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+/**
+ * Retrieve a single user by ID (excluding password).
+ * @param req - Express request (params: id)
+ * @param res - Express response with user or 404
+ */
 export const getUserById = async (
   req: Request,
   res: Response
@@ -54,6 +64,12 @@ export const getUserById = async (
   }
 };
 
+/**
+ * Create a new user with hashed password.
+ * Returns 409 if email is already registered.
+ * @param req - Express request (body: name, email, password?, role?)
+ * @param res - Express response with 201 and created user
+ */
 export const createUser = async (
   req: Request,
   res: Response
@@ -81,6 +97,11 @@ export const createUser = async (
   }
 };
 
+/**
+ * Update a user's name and/or email.
+ * @param req - Express request (params: id, body: name?, email?)
+ * @param res - Express response with updated user or 404
+ */
 export const updateUser = async (
   req: Request,
   res: Response
@@ -110,6 +131,11 @@ export const updateUser = async (
   }
 };
 
+/**
+ * Delete a user by ID.
+ * @param req - Express request (params: id)
+ * @param res - Express response with 204 on success or 404
+ */
 export const deleteUser = async (
   req: Request,
   res: Response

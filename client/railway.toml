@@ -1,0 +1,8 @@
+[build]
+builder = "NIXPACKS"
+buildCommand = "yarn install --frozen-lockfile && yarn build"
+
+[deploy]
+startCommand = "node .next/standalone/server.js"
+healthcheckPath = "/"
+healthcheckTimeout = 15

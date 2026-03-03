@@ -5,6 +5,11 @@ import env from '../lib/env';
 import { sendLowStockAlert } from '../lib/mailer';
 import prisma from '../lib/prisma';
 
+/**
+ * Retrieve dashboard metrics: popular products, sales/purchase/expense summaries.
+ * @param req - Express request
+ * @param res - Express response with aggregated dashboard data
+ */
 export const getDashboardMetrics = async (
   req: Request,
   res: Response
@@ -61,7 +66,12 @@ export const getDashboardMetrics = async (
   }
 };
 
-/* ── KPI Metrics ── */
+/**
+ * Retrieve KPI metrics: revenue, expenses, product/user counts, low stock count.
+ * Compares current 30-day window against prior 30-day window for change %.
+ * @param _req - Express request (unused)
+ * @param res - Express response with KPI data
+ */
 export const getKpiMetrics = async (
   _req: Request,
   res: Response
@@ -136,7 +146,12 @@ export const getKpiMetrics = async (
   }
 };
 
-/* ── Sales Aggregation by Timeframe ── */
+/**
+ * Aggregate sales by timeframe (daily / weekly / monthly).
+ * Returns grouped totals with period-over-period change percentages.
+ * @param req - Express request (query: timeframe? — daily|weekly|monthly)
+ * @param res - Express response with sales aggregation array
+ */
 export const getSalesAggregation = async (
   req: Request,
   res: Response
@@ -219,7 +234,11 @@ export const getSalesAggregation = async (
   }
 };
 
-/* ── Reports ── */
+/**
+ * Generate a comprehensive report: P&L, stock valuation, top products, sales trend.
+ * @param req - Express request (query: startDate?, endDate?)
+ * @param res - Express response with full report object
+ */
 export const getReports = async (
   req: Request,
   res: Response
@@ -332,7 +351,12 @@ export const getReports = async (
   }
 };
 
-/* ── Low Stock Products ── */
+/**
+ * Retrieve products whose stock is at or below their threshold.
+ * Uses raw SQL query for direct threshold comparison.
+ * @param _req - Express request (unused)
+ * @param res - Express response with low stock products array
+ */
 export const getLowStockProducts = async (
   _req: Request,
   res: Response
@@ -359,7 +383,13 @@ export const getLowStockProducts = async (
   }
 };
 
-/* ── Send Low Stock Email Alert ── */
+/**
+ * Send a low stock alert email.
+ * Falls back to ALERT_EMAIL env var if no email in request body.
+ * Skips sending if no products are below threshold.
+ * @param req - Express request (body: email?)
+ * @param res - Express response with send result or skip message
+ */
 export const sendLowStockEmail = async (
   req: Request,
   res: Response
