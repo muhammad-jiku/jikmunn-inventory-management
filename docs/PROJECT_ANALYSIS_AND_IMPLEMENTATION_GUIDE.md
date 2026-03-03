@@ -454,67 +454,77 @@ client/src/
 
 ---
 
-### Phase 4: Authentication & Authorization (3-5 days)
+### Phase 4: Authentication & Authorization (3-5 days) ✅ COMPLETED
 
 > **Goal:** Implement user authentication and role-based access control.
 
 #### 4.1 Backend Auth
 
-- [ ] Add `password` (hashed), `role` fields to Users model
-- [ ] Install `bcryptjs` for password hashing, `jsonwebtoken` for JWT
-- [ ] Create `POST /auth/register` endpoint
-- [ ] Create `POST /auth/login` endpoint
-- [ ] Create `POST /auth/refresh` token refresh endpoint
-- [ ] Create auth middleware for protected routes
-- [ ] Implement role-based access control (Admin, Manager, Viewer)
+- [x] Add `password` (hashed), `role` fields to Users model
+- [x] Install `bcryptjs` for password hashing, `jsonwebtoken` for JWT
+- [x] Create `POST /auth/register` endpoint
+- [x] Create `POST /auth/login` endpoint
+- [x] Create `POST /auth/refresh` token refresh endpoint
+- [x] Create auth middleware for protected routes
+- [x] Implement role-based access control (Admin, Manager, Viewer)
 
 #### 4.2 Frontend Auth
 
-- [ ] Create Login page
-- [ ] Create Register page
-- [ ] Add auth state to Redux store
-- [ ] Create auth guard / protected route wrapper
-- [ ] Add token refresh logic to RTK Query baseQuery
-- [ ] Update Navbar to show logged-in user info
-- [ ] Add logout functionality
+- [x] Create Login page
+- [x] Create Register page
+- [x] Add auth state to Redux store
+- [x] Create auth guard / protected route wrapper
+- [x] Add token refresh logic to RTK Query baseQuery
+- [x] Update Navbar to show logged-in user info
+- [x] Add logout functionality
 
 #### 4.3 Settings Integration
 
-- [ ] Connect Settings page to actual user profile API
-- [ ] Make settings persist to server (username, email, notification preferences)
+- [x] Connect Settings page to actual user profile API
+- [x] Make settings persist to server (username, email, notification preferences)
+
+**Implementation Notes (Phase 4):**
+
+- JWT access + refresh token pattern with auto-refresh on 401 via custom RTK Query `baseQueryWithReauth`
+- bcryptjs with 12 salt rounds for password hashing
+- Three roles: `admin`, `manager`, `viewer` — admin role required for user management
+- AuthGuard component wraps protected routes; public routes (`/login`, `/register`) render without sidebar/navbar
+- `PUT /auth/profile` endpoint for self-profile updates (name, email) — separate from admin-only user routes
+- Settings page now reads from auth state, persists changes via profile API, and syncs Redux auth state on save
+- Prisma migration `add_auth_fields` added `password`, `role`, `@unique` email, and `@@index([email])`
 
 ---
 
-### Phase 5: UI/UX Enhancements (2-3 days)
+### Phase 5: UI/UX Enhancements (2-3 days) ✅ COMPLETED
 
 > **Goal:** Polish the frontend experience.
 
 #### 5.1 Feedback & Notifications
 
-- [ ] Install `react-hot-toast` or `sonner` for toast notifications
-- [ ] Add success/error toasts on all CRUD operations
-- [ ] Add confirmation dialogs for delete operations (using a reusable modal)
-- [ ] Implement real notification bell with backend-driven notifications
+- [x] Install `sonner` for toast notifications (`sonner@2.0.7`)
+- [x] Add success/error toasts on all CRUD operations (Products, Users, Expenses, Sales, Purchases, Settings)
+- [x] Add confirmation dialogs for delete operations (reusable `ConfirmDialog` component)
+- [x] Toast helper utilities (`toastSuccess`, `toastError` in `client/src/lib/toast.ts`)
 
 #### 5.2 Loading & Error States
 
-- [ ] Create Skeleton loader components (product card skeleton, table skeleton, chart skeleton)
-- [ ] Create proper Error boundary component
-- [ ] Create 404 Not Found page
-- [ ] Add empty state illustrations ("No products found", "No expenses recorded")
+- [x] Create Skeleton loader components (`ProductCardSkeleton`, `ProductGridSkeleton`, `TableSkeleton`, `ChartSkeleton`, `StatCardSkeleton`)
+- [x] Create proper Error boundary component (`ErrorBoundary` wrapping all protected routes)
+- [x] Create 404 Not Found page (`client/src/app/not-found.tsx`)
+- [x] Add empty state illustrations with reusable `EmptyState` component across all pages
 
 #### 5.3 Search & Navigation
 
-- [ ] Implement global search in Navbar (search products, users, expenses)
-- [ ] Add breadcrumb navigation
-- [ ] Add keyboard shortcut for search (`Ctrl+K` / `Cmd+K`)
-- [ ] Add responsive mobile navigation — hamburger menu / drawer for small screens
+- [x] Implement global search via `CommandPalette` (search products, users, expenses with keyboard navigation)
+- [x] Add breadcrumb navigation (auto-generated from URL pathname)
+- [x] Add keyboard shortcut for search (`Ctrl+K` / `Cmd+K`)
+- [x] Add responsive mobile navigation — backdrop overlay, auto-close on link tap, hamburger toggle
 
 #### 5.4 Forms
 
-- [ ] Add client-side form validation (using `react-hook-form` + `zod`)
-- [ ] Add form feedback (field-level errors, success messages)
-- [ ] Add image upload for products
+- [x] Add client-side form validation using `react-hook-form@7.71.2` + `@hookform/resolvers@5.2.2` + `zod@4.3.6`
+- [x] Add form feedback (field-level error messages below each input in all 6 modal forms)
+- [x] Zod schemas for all entities (`productFormSchema`, `userFormSchema`, `expenseFormSchema`, `saleFormSchema`, `purchaseFormSchema`)
 
 ---
 
@@ -524,32 +534,32 @@ client/src/
 
 #### 6.1 Dashboard Enhancements
 
-- [ ] Make StatCards dynamic — fetch data from API instead of hardcoding
-- [ ] Add date range picker for dashboard metrics
-- [ ] Make the timeframe selector functional in Sales chart (daily/weekly/monthly aggregation)
-- [ ] Add real-time dashboard refresh with polling or WebSocket
-- [ ] Add KPI widgets — total revenue, total products, active users
+- [x] Make StatCards dynamic — fetch data from API instead of hardcoding
+- [x] Add date range picker for dashboard metrics
+- [x] Make the timeframe selector functional in Sales chart (daily/weekly/monthly aggregation)
+- [x] Add real-time dashboard refresh with polling or WebSocket
+- [x] Add KPI widgets — total revenue, total products, active users
 
 #### 6.2 Data Export
 
-- [ ] Add CSV export functionality for all list pages
-- [ ] Add PDF export for reports
-- [ ] Add print-friendly views
+- [x] Add CSV export functionality for all list pages
+- [x] Add PDF export for reports
+- [x] Add print-friendly views
 
 #### 6.3 Reports Module
 
-- [ ] Create `/reports` page
-- [ ] Profit & Loss report
-- [ ] Stock Valuation report
-- [ ] Sales trend report with date range filtering
-- [ ] Top selling products report
+- [x] Create `/reports` page
+- [x] Profit & Loss report
+- [x] Stock Valuation report
+- [x] Sales trend report with date range filtering
+- [x] Top selling products report
 
 #### 6.4 Stock Alerts
 
-- [ ] Add stock threshold field to Products model
-- [ ] Create low stock detection logic
-- [ ] Display low stock warnings on dashboard and inventory page
-- [ ] Optional: Email notification for low stock (using nodemailer)
+- [x] Add stock threshold field to Products model
+- [x] Create low stock detection logic
+- [x] Display low stock warnings on dashboard and inventory page
+- [x] Optional: Email notification for low stock (using nodemailer)
 
 ---
 

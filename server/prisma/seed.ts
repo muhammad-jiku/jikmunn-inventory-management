@@ -45,7 +45,7 @@ async function main() {
     const filePath = path.join(dataDirectory, fileName);
     const jsonData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
     const modelName = path.basename(fileName, path.extname(fileName));
-    const model = prisma[modelName as keyof typeof prisma] as
+    const model = prisma[modelName as keyof typeof prisma] as unknown as
       | {
           create: (args: { data: Record<string, unknown> }) => Promise<unknown>;
         }

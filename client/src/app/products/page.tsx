@@ -1,5 +1,7 @@
 'use client';
 
+import { exportToCsv } from '@/lib/exportUtils';
+import { toastError, toastSuccess } from '@/lib/toast';
 import {
   Product,
   useCreateProductMutation,
@@ -7,14 +9,23 @@ import {
   useGetProductsQuery,
   useUpdateProductMutation,
 } from '@/state/api';
-import { EditIcon, PlusCircleIcon, SearchIcon, Trash2Icon } from 'lucide-react';
+import {
+  Clipboard,
+  Download,
+  EditIcon,
+  PlusCircleIcon,
+  SearchIcon,
+  Trash2Icon,
+} from 'lucide-react';
 import Image from 'next/image';
 import { useState } from 'react';
+import EmptyState from '../(components)/EmptyState';
 import Header from '../(components)/Header';
 import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
 import CreateProduct from '../(components)/Modal/CreateProduct';
 import EditProduct from '../(components)/Modal/EditProduct';
 import Rating from '../(components)/Rating';
+import { ProductGridSkeleton } from '../(components)/Skeleton';
 
 type ProductFormData = {
   name: string;
@@ -41,22 +52,58 @@ const Products = () => {
   const [deleteProduct] = useDeleteProductMutation();
 
   const handleCreateProduct = async (productData: ProductFormData) => {
-    await createProduct(productData);
+    try {
+      await createProduct(productData).unwrap();
+      toastSuccess('Product created successfully');
+    } catch (err) {
+      toastError(err, 'Failed to create product');
+    }
   };
 
   const handleUpdateProduct = async (productData: ProductFormData) => {
     if (!editingProduct) return;
-    await updateProduct({ id: editingProduct.productId, ...productData });
+    try {
+      await updateProduct({
+        id: editingProduct.productId,
+        ...productData,
+      }).unwrap();
+      toastSuccess('Product updated successfully');
+    } catch (err) {
+      toastError(err, 'Failed to update product');
+    }
   };
 
   const handleDeleteProduct = async () => {
     if (!deletingProduct) return;
-    await deleteProduct(deletingProduct.productId);
+    try {
+      await deleteProduct(deletingProduct.productId).unwrap();
+      toastSuccess('Product deleted');
+    } catch (err) {
+      toastError(err, 'Failed to delete product');
+    }
     setDeletingProduct(null);
   };
 
+  const handleExport = () => {
+    if (!products?.length) return;
+    exportToCsv(products as unknown as Record<string, unknown>[], 'products', [
+      { key: 'productId', label: 'ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'price', label: 'Price' },
+      { key: 'stockQuantity', label: 'Stock Quantity' },
+      { key: 'rating', label: 'Rating' },
+    ]);
+  };
+
   if (isLoading) {
-    return <div className='py-4'>Loading...</div>;
+    return (
+      <div className='mx-auto pb-5 w-full'>
+        <Header name='Products' />
+        <div className='mt-6'>
+          <ProductGridSkeleton />
+        </div>
+      </div>
+    );
   }
 
   if (isError || !productsResponse) {
@@ -85,21 +132,27 @@ const Products = () => {
       {/* HEADER BAR */}
       <div className='flex justify-between items-center mb-6'>
         <Header name='Products' />
-        <button
-          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
-          onClick={() => setIsCreateModalOpen(true)}
-        >
-          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200!' /> Create
-          Product
-        </button>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleExport}
+            className='flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+          >
+            <Download className='w-4 h-4' /> Export CSV
+          </button>
+          <button
+            className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+            onClick={() => setIsCreateModalOpen(true)}
+          >
+            <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200!' /> Create
+            Product
+          </button>
+        </div>
       </div>
 
       {/* BODY PRODUCTS LIST */}
-      <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-between'>
-        {isLoading ? (
-          <div>Loading...</div>
-        ) : (
-          products?.map((product) => (
+      {products && products.length > 0 ? (
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 justify-between'>
+          {products.map((product) => (
             <div
               key={product.productId}
               className='border border-gray-200 dark:border-gray-700 shadow rounded-md p-4 max-w-full w-full mx-auto bg-white dark:bg-gray-800 relative group'
@@ -148,9 +201,29 @@ const Products = () => {
                 )}
               </div>
             </div>
-          ))
-        )}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={Clipboard}
+          title='No products found'
+          description={
+            searchTerm
+              ? `No products match "${searchTerm}". Try a different search.`
+              : 'Get started by creating your first product.'
+          }
+          action={
+            !searchTerm ? (
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm'
+              >
+                <PlusCircleIcon className='w-4 h-4' /> Create Product
+              </button>
+            ) : undefined
+          }
+        />
+      )}
 
       {/* CREATE MODAL */}
       <CreateProduct

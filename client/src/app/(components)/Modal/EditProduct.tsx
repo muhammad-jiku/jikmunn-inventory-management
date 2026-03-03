@@ -1,21 +1,16 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
+import { ProductFormValues, productFormSchema } from '@/lib/formSchemas';
 import { Product } from '@/state/api';
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import Header from '../Header';
-
-type ProductFormData = {
-  name: string;
-  price: number;
-  stockQuantity: number;
-  rating: number;
-};
 
 type EditProductProps = {
   isOpen: boolean;
   onClose: () => void;
-  onUpdate: (formData: ProductFormData) => void;
+  onUpdate: (formData: ProductFormValues) => void;
   product: Product;
 };
 
@@ -25,106 +20,105 @@ const EditProduct = ({
   onUpdate,
   product,
 }: EditProductProps) => {
-  const [formData, setFormData] = useState<ProductFormData>({
-    name: product.name,
-    price: product.price,
-    stockQuantity: product.stockQuantity,
-    rating: product.rating ?? 0,
-  });
-
-  useEffect(() => {
-    setFormData({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ProductFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(productFormSchema) as any,
+    defaultValues: {
       name: product.name,
       price: product.price,
       stockQuantity: product.stockQuantity,
       rating: product.rating ?? 0,
-    });
-  }, [product]);
+      stockThreshold: product.stockThreshold ?? 10,
+    },
+  });
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]:
-        name === 'price' || name === 'stockQuantity' || name === 'rating'
-          ? parseFloat(value)
-          : value,
+  useEffect(() => {
+    reset({
+      name: product.name,
+      price: product.price,
+      stockQuantity: product.stockQuantity,
+      rating: product.rating ?? 0,
+      stockThreshold: product.stockThreshold ?? 10,
     });
-  };
+  }, [product, reset]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onUpdate(formData);
+  const onFormSubmit = (data: ProductFormValues) => {
+    onUpdate(data);
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const labelCssStyles =
-    'block text-sm font-medium text-gray-700 dark:text-gray-300';
-  const inputCssStyles =
-    'block w-full mb-2 p-2 border-gray-500 dark:border-gray-600 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const labelCss = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  const inputCss =
+    'block w-full mb-1 p-2 border-gray-500 dark:border-gray-600 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const errorCss = 'text-red-500 text-xs mb-2';
 
   return (
     <div className='fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-20'>
       <div className='relative top-20 mx-auto p-5 border border-gray-300 dark:border-gray-600 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800'>
         <Header name='Edit Product' />
-        <form onSubmit={handleSubmit} className='mt-5'>
-          <label htmlFor='editProductName' className={labelCssStyles}>
-            Product Name
-          </label>
+        <form onSubmit={handleSubmit(onFormSubmit)} className='mt-5'>
+          <label className={labelCss}>Product Name</label>
           <input
             type='text'
-            name='name'
             placeholder='Name'
-            onChange={handleChange}
-            value={formData.name}
-            className={inputCssStyles}
-            required
+            {...register('name')}
+            className={inputCss}
           />
+          {errors.name && <p className={errorCss}>{errors.name.message}</p>}
 
-          <label htmlFor='editProductPrice' className={labelCssStyles}>
-            Price
-          </label>
+          <label className={labelCss}>Price</label>
           <input
             type='number'
-            name='price'
+            step='0.01'
             placeholder='Price'
-            onChange={handleChange}
-            value={formData.price}
-            className={inputCssStyles}
-            required
+            {...register('price')}
+            className={inputCss}
           />
+          {errors.price && <p className={errorCss}>{errors.price.message}</p>}
 
-          <label htmlFor='editStockQuantity' className={labelCssStyles}>
-            Stock Quantity
-          </label>
+          <label className={labelCss}>Stock Quantity</label>
           <input
             type='number'
-            name='stockQuantity'
             placeholder='Stock Quantity'
-            onChange={handleChange}
-            value={formData.stockQuantity}
-            className={inputCssStyles}
-            required
+            {...register('stockQuantity')}
+            className={inputCss}
           />
+          {errors.stockQuantity && (
+            <p className={errorCss}>{errors.stockQuantity.message}</p>
+          )}
 
-          <label htmlFor='editRating' className={labelCssStyles}>
-            Rating
-          </label>
+          <label className={labelCss}>Rating</label>
           <input
             type='number'
-            name='rating'
-            placeholder='Rating'
-            onChange={handleChange}
-            value={formData.rating}
-            className={inputCssStyles}
-            required
+            step='0.1'
+            placeholder='Rating (0-5)'
+            {...register('rating')}
+            className={inputCss}
           />
+          {errors.rating && <p className={errorCss}>{errors.rating.message}</p>}
+
+          <label className={labelCss}>Low Stock Threshold</label>
+          <input
+            type='number'
+            placeholder='Low stock alert threshold'
+            {...register('stockThreshold')}
+            className={inputCss}
+          />
+          {errors.stockThreshold && (
+            <p className={errorCss}>{errors.stockThreshold.message}</p>
+          )}
 
           <button
             type='submit'
-            className='mt-4 px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-700'
+            disabled={isSubmitting}
+            className='mt-4 px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-700 disabled:opacity-50'
           >
             Save Changes
           </button>

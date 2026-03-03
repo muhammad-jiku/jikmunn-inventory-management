@@ -1,21 +1,21 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
+import { SaleFormValues, saleFormSchema } from '@/lib/formSchemas';
 import { Product, Sale, useGetProductsQuery } from '@/state/api';
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import Header from '../Header';
-
-type SaleFormData = {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  timestamp: string;
-};
 
 type SaleFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: SaleFormData) => void;
+  onSubmit: (formData: {
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+    timestamp: string;
+  }) => void;
   sale?: Sale;
 };
 
@@ -28,77 +28,67 @@ const SaleFormModal = ({
   const { data: productsResponse } = useGetProductsQuery();
   const products = productsResponse?.data ?? [];
 
-  const [formData, setFormData] = useState<SaleFormData>({
-    productId: sale?.productId ?? '',
-    quantity: sale?.quantity ?? 1,
-    unitPrice: sale?.unitPrice ?? 0,
-    timestamp: sale?.timestamp
-      ? new Date(sale.timestamp).toISOString().slice(0, 16)
-      : new Date().toISOString().slice(0, 16),
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<SaleFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(saleFormSchema) as any,
+    defaultValues: {
+      productId: sale?.productId ?? '',
+      quantity: sale?.quantity ?? 1,
+      unitPrice: sale?.unitPrice ?? 0,
+      timestamp: sale?.timestamp
+        ? new Date(sale.timestamp).toISOString().slice(0, 16)
+        : new Date().toISOString().slice(0, 16),
+    },
   });
 
   useEffect(() => {
     if (sale) {
-      setFormData({
+      reset({
         productId: sale.productId,
         quantity: sale.quantity,
         unitPrice: sale.unitPrice,
         timestamp: new Date(sale.timestamp).toISOString().slice(0, 16),
       });
     } else {
-      setFormData({
+      reset({
         productId: '',
         quantity: 1,
         unitPrice: 0,
         timestamp: new Date().toISOString().slice(0, 16),
       });
     }
-  }, [sale, isOpen]);
+  }, [sale, isOpen, reset]);
 
-  const handleChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        name === 'quantity' || name === 'unitPrice' ? Number(value) : value,
-    }));
-  };
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onFormSubmit = (data: SaleFormValues) => {
     onSubmit({
-      ...formData,
-      timestamp: new Date(formData.timestamp).toISOString(),
+      ...data,
+      timestamp: data.timestamp
+        ? new Date(data.timestamp).toISOString()
+        : new Date().toISOString(),
     });
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const labelCssStyles =
-    'block text-sm font-medium text-gray-700 dark:text-gray-300';
-  const inputCssStyles =
-    'block w-full mb-2 p-2 border-gray-500 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const labelCss = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  const inputCss =
+    'block w-full mb-1 p-2 border-gray-500 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const errorCss = 'text-red-500 text-xs mb-2';
 
   return (
     <div className='fixed inset-0 bg-gray-600/50 overflow-y-auto h-full w-full z-20'>
       <div className='relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white dark:bg-gray-900'>
         <Header name={sale ? 'Edit Sale' : 'Create Sale'} />
-        <form onSubmit={handleSubmit} className='mt-5'>
+        <form onSubmit={handleSubmit(onFormSubmit)} className='mt-5'>
           {/* PRODUCT */}
-          <label htmlFor='productId' className={labelCssStyles}>
-            Product
-          </label>
-          <select
-            name='productId'
-            id='productId'
-            required
-            onChange={handleChange}
-            value={formData.productId}
-            className={inputCssStyles}
-          >
+          <label className={labelCss}>Product</label>
+          <select {...register('productId')} className={inputCss}>
             <option value=''>Select a product</option>
             {products.map((product: Product) => (
               <option key={product.productId} value={product.productId}>
@@ -106,66 +96,64 @@ const SaleFormModal = ({
               </option>
             ))}
           </select>
+          {errors.productId && (
+            <p className={errorCss}>{errors.productId.message}</p>
+          )}
 
           {/* QUANTITY */}
-          <label htmlFor='quantity' className={labelCssStyles}>
-            Quantity
-          </label>
+          <label className={labelCss}>Quantity</label>
           <input
             type='number'
-            name='quantity'
-            id='quantity'
             min={1}
-            required
             placeholder='Quantity'
-            onChange={handleChange}
-            value={formData.quantity}
-            className={inputCssStyles}
+            {...register('quantity')}
+            className={inputCss}
           />
+          {errors.quantity && (
+            <p className={errorCss}>{errors.quantity.message}</p>
+          )}
 
           {/* UNIT PRICE */}
-          <label htmlFor='unitPrice' className={labelCssStyles}>
-            Unit Price
-          </label>
+          <label className={labelCss}>Unit Price</label>
           <input
             type='number'
-            name='unitPrice'
-            id='unitPrice'
             min={0}
             step='0.01'
-            required
             placeholder='Unit Price'
-            onChange={handleChange}
-            value={formData.unitPrice}
-            className={inputCssStyles}
+            {...register('unitPrice')}
+            className={inputCss}
           />
+          {errors.unitPrice && (
+            <p className={errorCss}>{errors.unitPrice.message}</p>
+          )}
 
           {/* TIMESTAMP */}
-          <label htmlFor='timestamp' className={labelCssStyles}>
-            Date & Time
-          </label>
+          <label className={labelCss}>Date & Time</label>
           <input
             type='datetime-local'
-            name='timestamp'
-            id='timestamp'
-            required
-            onChange={handleChange}
-            value={formData.timestamp}
-            className={inputCssStyles}
+            {...register('timestamp')}
+            className={inputCss}
           />
+          {errors.timestamp && (
+            <p className={errorCss}>{errors.timestamp.message}</p>
+          )}
 
           {/* ACTIONS */}
           <div className='flex justify-end gap-2 mt-4'>
             <button
               type='button'
-              onClick={onClose}
+              onClick={() => {
+                reset();
+                onClose();
+              }}
               className='px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-700'
             >
               Cancel
             </button>
             <button
               type='submit'
-              className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700'
+              disabled={isSubmitting}
+              className='px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-700 disabled:opacity-50'
             >
               {sale ? 'Update' : 'Create'}
             </button>

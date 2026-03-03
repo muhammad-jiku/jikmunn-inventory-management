@@ -1,6 +1,8 @@
 'use client';
 
 import { dataGridClassName, dataGridDarkModeSx } from '@/lib/dataGridStyles';
+import { exportToCsv } from '@/lib/exportUtils';
+import { toastError, toastSuccess } from '@/lib/toast';
 import {
   User,
   useCreateUserMutation,
@@ -9,11 +11,19 @@ import {
   useUpdateUserMutation,
 } from '@/state/api';
 import { DataGrid, GridActionsCellItem, GridColDef } from '@mui/x-data-grid';
-import { EditIcon, PlusCircleIcon, Trash2Icon } from 'lucide-react';
+import {
+  Download,
+  EditIcon,
+  PlusCircleIcon,
+  Trash2Icon,
+  Users as UsersIcon,
+} from 'lucide-react';
 import { useState } from 'react';
+import EmptyState from '../(components)/EmptyState';
 import Header from '../(components)/Header';
 import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
 import UserFormModal from '../(components)/Modal/UserFormModal';
+import { TableSkeleton } from '../(components)/Skeleton';
 
 const Users = () => {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -31,7 +41,12 @@ const Users = () => {
     name: string;
     email: string;
   }) => {
-    await createUser(formData);
+    try {
+      await createUser(formData).unwrap();
+      toastSuccess('User created successfully');
+    } catch (err) {
+      toastError(err, 'Failed to create user');
+    }
   };
 
   const handleUpdateUser = async (formData: {
@@ -39,12 +54,22 @@ const Users = () => {
     email: string;
   }) => {
     if (!editingUser) return;
-    await updateUser({ id: editingUser.userId, ...formData });
+    try {
+      await updateUser({ id: editingUser.userId, ...formData }).unwrap();
+      toastSuccess('User updated successfully');
+    } catch (err) {
+      toastError(err, 'Failed to update user');
+    }
   };
 
   const handleDeleteUser = async () => {
     if (!deletingUser) return;
-    await deleteUser(deletingUser.userId);
+    try {
+      await deleteUser(deletingUser.userId).unwrap();
+      toastSuccess('User deleted');
+    } catch (err) {
+      toastError(err, 'Failed to delete user');
+    }
     setDeletingUser(null);
   };
 
@@ -74,8 +99,24 @@ const Users = () => {
     },
   ];
 
+  const handleExport = () => {
+    if (!users?.length) return;
+    exportToCsv(users as unknown as Record<string, unknown>[], 'users', [
+      { key: 'userId', label: 'ID' },
+      { key: 'name', label: 'Name' },
+      { key: 'email', label: 'Email' },
+    ]);
+  };
+
   if (isLoading) {
-    return <div className='py-4'>Loading...</div>;
+    return (
+      <div className='flex flex-col'>
+        <Header name='Users' />
+        <div className='mt-5'>
+          <TableSkeleton rows={6} cols={4} />
+        </div>
+      </div>
+    );
   }
 
   if (isError || !usersResponse) {
@@ -88,28 +129,52 @@ const Users = () => {
     <div className='flex flex-col'>
       <div className='flex justify-between items-center'>
         <Header name='Users' />
-        <button
-          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add User
-        </button>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleExport}
+            className='flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+          >
+            <Download className='w-4 h-4' /> Export CSV
+          </button>
+          <button
+            className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add User
+          </button>
+        </div>
       </div>
-      <div className='mt-5'>
-        <DataGrid
-          rows={users ?? []}
-          columns={columns}
-          getRowId={(row) => row.userId}
-          checkboxSelection
-          disableColumnMenu
-          hideFooterSelectedRowCount
-          disableColumnResize
-          disableColumnSelector
-          autoHeight
-          className={dataGridClassName}
-          sx={dataGridDarkModeSx}
+      {users && users.length > 0 ? (
+        <div className='mt-5'>
+          <DataGrid
+            rows={users ?? []}
+            columns={columns}
+            getRowId={(row) => row.userId}
+            checkboxSelection
+            disableColumnMenu
+            hideFooterSelectedRowCount
+            disableColumnResize
+            disableColumnSelector
+            autoHeight
+            className={dataGridClassName}
+            sx={dataGridDarkModeSx}
+          />
+        </div>
+      ) : (
+        <EmptyState
+          icon={UsersIcon}
+          title='No users found'
+          description='Add users to manage access and permissions.'
+          action={
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm'
+            >
+              <PlusCircleIcon className='w-4 h-4' /> Add User
+            </button>
+          }
         />
-      </div>
+      )}
 
       {/* CREATE MODAL */}
       <UserFormModal

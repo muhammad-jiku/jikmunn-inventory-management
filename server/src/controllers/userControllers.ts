@@ -1,6 +1,19 @@
+import bcrypt from 'bcryptjs';
 import { Request, Response } from 'express';
 import { sendError, sendPaginated } from '../lib/apiResponse';
 import prisma from '../lib/prisma';
+
+const SALT_ROUNDS = 12;
+
+/** Select fields that are safe to return (excludes password) */
+const safeUserSelect = {
+  userId: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true,
+  updatedAt: true,
+};
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -9,7 +22,7 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
     const skip = (page - 1) * limit;
 
     const [users, total] = await Promise.all([
-      prisma.users.findMany({ skip, take: limit }),
+      prisma.users.findMany({ skip, take: limit, select: safeUserSelect }),
       prisma.users.count(),
     ]);
 
@@ -27,6 +40,7 @@ export const getUserById = async (
     const { id } = req.params;
     const user = await prisma.users.findUnique({
       where: { userId: id },
+      select: safeUserSelect,
     });
 
     if (!user) {
@@ -45,9 +59,21 @@ export const createUser = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, email } = req.body;
+    const { name, email, password, role } = req.body;
+
+    const existing = await prisma.users.findUnique({ where: { email } });
+    if (existing) {
+      sendError(res, 409, 'Email already registered');
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(
+      password || 'changeme123',
+      SALT_ROUNDS
+    );
     const user = await prisma.users.create({
-      data: { name, email },
+      data: { name, email, password: hashedPassword, role: role || 'viewer' },
+      select: safeUserSelect,
     });
     res.status(201).json(user);
   } catch (_error) {
@@ -75,6 +101,7 @@ export const updateUser = async (
     const user = await prisma.users.update({
       where: { userId: id },
       data: { name, email },
+      select: safeUserSelect,
     });
 
     res.json(user);

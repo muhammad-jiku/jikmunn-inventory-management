@@ -1,5 +1,6 @@
 import globalReducer from '@/state';
 import { api } from '@/state/api';
+import authReducer from '@/state/authSlice';
 import { combineReducers, configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
 import { useState } from 'react';
@@ -46,10 +47,11 @@ const storage =
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['global'],
+  whitelist: ['global', 'auth'],
 };
 const rootReducer = combineReducers({
   global: globalReducer,
+  auth: authReducer,
   [api.reducerPath]: api.reducer,
 });
 const persistedReducer = persistReducer(persistConfig, rootReducer);

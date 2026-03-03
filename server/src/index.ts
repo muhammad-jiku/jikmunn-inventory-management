@@ -8,12 +8,15 @@ import logger, { morganStream } from './lib/logger';
 /* MIDDLEWARE IMPORTS */
 import { apiLimiter } from './middleware/rateLimiter';
 /* ROUTE IMPORTS */
+import authRoutes from './routes/authRoutes';
 import dashboardRoutes from './routes/dashboardRoutes';
 import expenseRoutes from './routes/expenseRoutes';
 import productRoutes from './routes/productRoutes';
 import purchaseRoutes from './routes/purchaseRoutes';
 import salesRoutes from './routes/salesRoutes';
 import userRoutes from './routes/userRoutes';
+/* MIDDLEWARE IMPORTS (auth) */
+import { authenticate, authorize } from './middleware/auth';
 
 /* CONFIGURATIONS */
 const app = express();
@@ -51,21 +54,25 @@ app.get('/health', (_req, res) => {
   });
 });
 
-/* API v1 ROUTES */
-app.use('/api/v1/dashboard', dashboardRoutes);
-app.use('/api/v1/products', productRoutes);
-app.use('/api/v1/users', userRoutes);
-app.use('/api/v1/expenses', expenseRoutes);
-app.use('/api/v1/sales', salesRoutes);
-app.use('/api/v1/purchases', purchaseRoutes);
+/* AUTH ROUTES (public) */
+app.use('/api/v1/auth', authRoutes);
+app.use('/auth', authRoutes);
 
-/* LEGACY ROUTES (backward compatibility) */
-app.use('/dashboard', dashboardRoutes);
-app.use('/products', productRoutes);
-app.use('/users', userRoutes);
-app.use('/expenses', expenseRoutes);
-app.use('/sales', salesRoutes);
-app.use('/purchases', purchaseRoutes);
+/* API v1 ROUTES (protected) */
+app.use('/api/v1/dashboard', authenticate, dashboardRoutes);
+app.use('/api/v1/products', authenticate, productRoutes);
+app.use('/api/v1/users', authenticate, authorize('admin'), userRoutes);
+app.use('/api/v1/expenses', authenticate, expenseRoutes);
+app.use('/api/v1/sales', authenticate, salesRoutes);
+app.use('/api/v1/purchases', authenticate, purchaseRoutes);
+
+/* LEGACY ROUTES (protected, backward compatibility) */
+app.use('/dashboard', authenticate, dashboardRoutes);
+app.use('/products', authenticate, productRoutes);
+app.use('/users', authenticate, authorize('admin'), userRoutes);
+app.use('/expenses', authenticate, expenseRoutes);
+app.use('/sales', authenticate, salesRoutes);
+app.use('/purchases', authenticate, purchaseRoutes);
 
 /* GLOBAL ERROR HANDLER */
 app.use(

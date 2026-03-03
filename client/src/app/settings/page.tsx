@@ -2,7 +2,10 @@
 'use client';
 
 import { useAppDispatch, useAppSelector } from '@/app/redux';
+import { toastError, toastSuccess } from '@/lib/toast';
 import { setIsDarkMode } from '@/state';
+import { useUpdateProfileMutation } from '@/state/api';
+import { updateProfile } from '@/state/authSlice';
 import { useEffect, useState } from 'react';
 import Header from '../(components)/Header';
 
@@ -10,31 +13,73 @@ type UserSetting = {
   label: string;
   value: string | boolean;
   type: 'text' | 'toggle';
-  key?: string;
+  key: string;
+  editable?: boolean;
 };
 
 const Settings = () => {
   const dispatch = useAppDispatch();
   const isDarkMode = useAppSelector((state) => state.global.isDarkMode);
+  const authUser = useAppSelector((state) => state.auth.user);
 
-  const mockSettings: UserSetting[] = [
-    { label: 'Username', value: 'john_doe', type: 'text' },
-    { label: 'Email', value: 'john.doe@example.com', type: 'text' },
-    { label: 'Notification', value: true, type: 'toggle' },
-    { label: 'Dark Mode', value: isDarkMode, type: 'toggle', key: 'darkMode' },
-    { label: 'Language', value: 'English', type: 'text' },
+  const [updateProfileMutation, { isLoading: isSaving }] =
+    useUpdateProfileMutation();
+
+  const buildSettings = (): UserSetting[] => [
+    {
+      label: 'Username',
+      value: authUser?.name ?? '',
+      type: 'text',
+      key: 'name',
+      editable: true,
+    },
+    {
+      label: 'Email',
+      value: authUser?.email ?? '',
+      type: 'text',
+      key: 'email',
+      editable: true,
+    },
+    {
+      label: 'Role',
+      value: authUser?.role ?? 'viewer',
+      type: 'text',
+      key: 'role',
+      editable: false,
+    },
+    {
+      label: 'Notification',
+      value: true,
+      type: 'toggle',
+      key: 'notification',
+    },
+    {
+      label: 'Dark Mode',
+      value: isDarkMode,
+      type: 'toggle',
+      key: 'darkMode',
+    },
   ];
 
-  const [userSettings, setUserSettings] = useState<UserSetting[]>(mockSettings);
+  const [userSettings, setUserSettings] =
+    useState<UserSetting[]>(buildSettings());
 
-  // Sync settings with Redux state
+  // Sync settings when auth user or dark mode changes
   useEffect(() => {
     setUserSettings((prev) =>
-      prev.map((setting) =>
-        setting.key === 'darkMode' ? { ...setting, value: isDarkMode } : setting
-      )
+      prev.map((setting) => {
+        if (setting.key === 'darkMode')
+          return { ...setting, value: isDarkMode };
+        if (setting.key === 'name')
+          return { ...setting, value: authUser?.name ?? '' };
+        if (setting.key === 'email')
+          return { ...setting, value: authUser?.email ?? '' };
+        if (setting.key === 'role')
+          return { ...setting, value: authUser?.role ?? 'viewer' };
+        return setting;
+      })
     );
-  }, [isDarkMode]);
+  }, [isDarkMode, authUser]);
 
   const handleToggleChange = (index: number) => {
     const setting = userSettings[index];
@@ -43,14 +88,47 @@ const Settings = () => {
       dispatch(setIsDarkMode(!isDarkMode));
     } else {
       const settingsCopy = [...userSettings];
-      settingsCopy[index].value = !settingsCopy[index].value as boolean;
+      settingsCopy[index] = {
+        ...settingsCopy[index],
+        value: !settingsCopy[index].value as boolean,
+      };
       setUserSettings(settingsCopy);
+    }
+  };
+
+  const handleTextChange = (index: number, newValue: string) => {
+    const settingsCopy = [...userSettings];
+    settingsCopy[index] = { ...settingsCopy[index], value: newValue };
+    setUserSettings(settingsCopy);
+  };
+
+  const handleSaveProfile = async () => {
+    const nameVal = userSettings.find((s) => s.key === 'name')?.value as string;
+    const emailVal = userSettings.find((s) => s.key === 'email')
+      ?.value as string;
+
+    if (!nameVal?.trim()) {
+      toastError(null, 'Name cannot be empty');
+      return;
+    }
+
+    try {
+      const result = await updateProfileMutation({
+        name: nameVal.trim(),
+        email: emailVal.trim(),
+      }).unwrap();
+
+      dispatch(updateProfile({ name: result.name, email: result.email }));
+      toastSuccess('Profile updated successfully');
+    } catch (err) {
+      toastError(err, 'Failed to update profile');
     }
   };
 
   return (
     <div className='w-full'>
       <Header name='User Settings' />
+
       <div className='overflow-x-auto mt-5 shadow-md'>
         <table className='min-w-full bg-white dark:bg-gray-800 rounded-lg'>
           <thead className='bg-gray-200 dark:bg-gray-900 text-gray-900 dark:text-gray-100'>
@@ -67,7 +145,7 @@ const Settings = () => {
             {userSettings.map((setting, index) => (
               <tr
                 className='hover:bg-blue-50 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100'
-                key={setting.label}
+                key={setting.key}
               >
                 <td className='py-2 px-4'>{setting.label}</td>
                 <td className='py-2 px-4'>
@@ -90,13 +168,14 @@ const Settings = () => {
                   ) : (
                     <input
                       type='text'
-                      className='px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400'
+                      className={`px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:border-blue-500 dark:focus:border-blue-400 ${
+                        setting.editable === false
+                          ? 'opacity-60 cursor-not-allowed'
+                          : ''
+                      }`}
                       value={setting.value as string}
-                      onChange={(e) => {
-                        const settingsCopy = [...userSettings];
-                        settingsCopy[index].value = e.target.value;
-                        setUserSettings(settingsCopy);
-                      }}
+                      readOnly={setting.editable === false}
+                      onChange={(e) => handleTextChange(index, e.target.value)}
                     />
                   )}
                 </td>
@@ -104,6 +183,16 @@ const Settings = () => {
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className='mt-6 flex justify-end'>
+        <button
+          onClick={handleSaveProfile}
+          disabled={isSaving}
+          className='px-6 py-2.5 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
+        >
+          {isSaving ? 'Saving...' : 'Save Profile'}
+        </button>
       </div>
     </div>
   );

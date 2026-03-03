@@ -17,23 +17,27 @@ datasource db {
 model Users {
   userId    String   @id @default(uuid())
   name      String
-  email     String
+  email     String   @unique
+  password  String
+  role      String   @default("viewer")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([email])
   @@map("tblusers")
 }
 
 model Products {
-  productId     String      @id @default(uuid())
-  name          String
-  price         Float
-  rating        Float?
-  stockQuantity Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  Sales         Sales[]
-  Purchases     Purchases[]
+  productId      String      @id @default(uuid())
+  name           String
+  price          Float
+  rating         Float?
+  stockQuantity  Int
+  stockThreshold Int         @default(10)
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  Sales          Sales[]
+  Purchases      Purchases[]
 
   @@index([name])
   @@map("tblproducts")

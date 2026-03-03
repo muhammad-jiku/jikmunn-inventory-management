@@ -1,5 +1,7 @@
 'use client';
 
+import { exportToCsv } from '@/lib/exportUtils';
+import { toastError, toastSuccess } from '@/lib/toast';
 import {
   Expense,
   ExpenseByCategorySummary,
@@ -8,7 +10,7 @@ import {
   useGetExpensesByCategoryQuery,
   useUpdateExpenseMutation,
 } from '@/state/api';
-import { PlusCircleIcon } from 'lucide-react';
+import { CircleDollarSign, Download, PlusCircleIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import {
   Cell,
@@ -18,9 +20,11 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from 'recharts';
+import EmptyState from '../(components)/EmptyState';
 import Header from '../(components)/Header';
 import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
 import ExpenseFormModal from '../(components)/Modal/ExpenseFormModal';
+import { ChartSkeleton } from '../(components)/Skeleton';
 
 type AggregatedDataItem = {
   name: string;
@@ -75,7 +79,12 @@ const Expenses = () => {
     amount: number;
     timestamp: string;
   }) => {
-    await createExpense(formData);
+    try {
+      await createExpense(formData).unwrap();
+      toastSuccess('Expense created successfully');
+    } catch (err) {
+      toastError(err, 'Failed to create expense');
+    }
   };
 
   const handleUpdateExpense = async (formData: {
@@ -84,12 +93,25 @@ const Expenses = () => {
     timestamp: string;
   }) => {
     if (!editingExpense) return;
-    await updateExpense({ id: editingExpense.expenseId, ...formData });
+    try {
+      await updateExpense({
+        id: editingExpense.expenseId,
+        ...formData,
+      }).unwrap();
+      toastSuccess('Expense updated successfully');
+    } catch (err) {
+      toastError(err, 'Failed to update expense');
+    }
   };
 
   const handleDeleteExpense = async () => {
     if (!deletingExpenseId) return;
-    await deleteExpense(deletingExpenseId);
+    try {
+      await deleteExpense(deletingExpenseId).unwrap();
+      toastSuccess('Expense deleted');
+    } catch (err) {
+      toastError(err, 'Failed to delete expense');
+    }
     setDeletingExpenseId(null);
   };
 
@@ -133,9 +155,24 @@ const Expenses = () => {
       'mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400 dark:focus:border-indigo-400 sm:text-sm rounded-md',
   };
 
+  const handleExport = () => {
+    if (!expenses.length) return;
+    exportToCsv(expenses as unknown as Record<string, unknown>[], 'expenses', [
+      { key: 'category', label: 'Category' },
+      { key: 'amount', label: 'Amount' },
+      { key: 'date', label: 'Date' },
+    ]);
+  };
+
   if (isLoading) {
     return (
-      <div className='py-4 text-gray-900 dark:text-gray-100'>Loading...</div>
+      <div>
+        <Header name='Expenses' />
+        <div className='mt-5 flex flex-col md:flex-row justify-between gap-4'>
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+      </div>
     );
   }
 
@@ -157,98 +194,125 @@ const Expenses = () => {
             A visual representation of expenses over time.
           </p>
         </div>
-        <button
-          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add Expense
-        </button>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleExport}
+            className='flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+          >
+            <Download className='w-4 h-4' /> Export CSV
+          </button>
+          <button
+            className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> Add
+            Expense
+          </button>
+        </div>
       </div>
 
       {/* FILTERS */}
-      <div className='mt-5 flex flex-col md:flex-row justify-between gap-4'>
-        <div className='w-full md:w-1/3 bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
-          <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100'>
-            Filter by Category and Date
-          </h3>
-          <div className='space-y-4'>
-            {/* CATEGORY */}
-            <div>
-              <label htmlFor='category' className={classNames.label}>
-                Category
-              </label>
-              <select
-                id='category'
-                name='category'
-                className={classNames.selectInput}
-                defaultValue='All'
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <option>All</option>
-                <option>Office</option>
-                <option>Professional</option>
-                <option>Salaries</option>
-              </select>
-            </div>
-            {/* START DATE */}
-            <div>
-              <label htmlFor='start-date' className={classNames.label}>
-                Start Date
-              </label>
-              <input
-                type='date'
-                id='start-date'
-                name='start-date'
-                className={classNames.selectInput}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            {/* END DATE */}
-            <div>
-              <label htmlFor='end-date' className={classNames.label}>
-                End Date
-              </label>
-              <input
-                type='date'
-                id='end-date'
-                name='end-date'
-                className={classNames.selectInput}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+      {expenses.length > 0 ? (
+        <div className='mt-5 flex flex-col md:flex-row justify-between gap-4'>
+          <div className='w-full md:w-1/3 bg-white dark:bg-gray-800 shadow rounded-lg p-6'>
+            <h3 className='text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100'>
+              Filter by Category and Date
+            </h3>
+            <div className='space-y-4'>
+              {/* CATEGORY */}
+              <div>
+                <label htmlFor='category' className={classNames.label}>
+                  Category
+                </label>
+                <select
+                  id='category'
+                  name='category'
+                  className={classNames.selectInput}
+                  defaultValue='All'
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                >
+                  <option>All</option>
+                  <option>Office</option>
+                  <option>Professional</option>
+                  <option>Salaries</option>
+                </select>
+              </div>
+              {/* START DATE */}
+              <div>
+                <label htmlFor='start-date' className={classNames.label}>
+                  Start Date
+                </label>
+                <input
+                  type='date'
+                  id='start-date'
+                  name='start-date'
+                  className={classNames.selectInput}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              {/* END DATE */}
+              <div>
+                <label htmlFor='end-date' className={classNames.label}>
+                  End Date
+                </label>
+                <input
+                  type='date'
+                  id='end-date'
+                  name='end-date'
+                  className={classNames.selectInput}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
             </div>
           </div>
+          {/* PIE CHART */}
+          <div className='grow bg-white dark:bg-gray-800 shadow rounded-lg p-4 md:p-6'>
+            <ResponsiveContainer width='100%' height={400}>
+              <PieChart>
+                <Pie
+                  data={aggregatedData}
+                  cx='50%'
+                  cy='50%'
+                  label
+                  outerRadius={150}
+                  fill='#8884d8'
+                  dataKey='amount'
+                  onMouseEnter={(_, index) => setActiveIndex(index)}
+                >
+                  {aggregatedData.map(
+                    (entry: AggregatedDataItem, index: number) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={
+                          index === activeIndex
+                            ? 'rgb(29, 78, 216)'
+                            : entry.color
+                        }
+                      />
+                    )
+                  )}
+                </Pie>
+                <Tooltip />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
         </div>
-        {/* PIE CHART */}
-        <div className='grow bg-white dark:bg-gray-800 shadow rounded-lg p-4 md:p-6'>
-          <ResponsiveContainer width='100%' height={400}>
-            <PieChart>
-              <Pie
-                data={aggregatedData}
-                cx='50%'
-                cy='50%'
-                label
-                outerRadius={150}
-                fill='#8884d8'
-                dataKey='amount'
-                onMouseEnter={(_, index) => setActiveIndex(index)}
-              >
-                {aggregatedData.map(
-                  (entry: AggregatedDataItem, index: number) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={
-                        index === activeIndex ? 'rgb(29, 78, 216)' : entry.color
-                      }
-                    />
-                  )
-                )}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
+      ) : (
+        <EmptyState
+          icon={CircleDollarSign}
+          title='No expenses recorded'
+          description='Track your business expenses to gain financial insights.'
+          action={
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm'
+            >
+              <PlusCircleIcon className='w-5 h-5' /> Add Expense
+            </button>
+          }
+        />
+      )}
 
       {/* CREATE MODAL */}
       <ExpenseFormModal

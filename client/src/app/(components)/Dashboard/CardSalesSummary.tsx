@@ -1,4 +1,4 @@
-import { useGetDashboardMetricsQuery } from '@/state/api';
+import { useGetSalesAggregationQuery } from '@/state/api';
 import { TrendingUp } from 'lucide-react';
 import { useState } from 'react';
 import {
@@ -12,17 +12,19 @@ import {
 } from 'recharts';
 
 const CardSalesSummary = () => {
-  const { data, isLoading, isError } = useGetDashboardMetricsQuery();
-  const salesData = data?.salesSummary || [];
-
   const [timeframe, setTimeframe] = useState('weekly');
+  const {
+    data: salesData = [],
+    isLoading,
+    isError,
+  } = useGetSalesAggregationQuery(timeframe, { pollingInterval: 60000 });
 
   const totalValueSum =
     salesData.reduce((acc, curr) => acc + curr.totalValue, 0) || 0;
 
   const averageChangePercentage =
     salesData.reduce((acc, curr, _, array) => {
-      return acc + curr.changePercentage! / array.length;
+      return acc + (curr.changePercentage ?? 0) / array.length;
     }, 0) || 0;
 
   const highestValueData = salesData.reduce((acc, curr) => {
@@ -36,6 +38,13 @@ const CardSalesSummary = () => {
         year: '2-digit',
       })
     : 'N/A';
+
+  const periodLabel =
+    timeframe === 'daily'
+      ? `${salesData.length} days`
+      : timeframe === 'weekly'
+        ? `${salesData.length} weeks`
+        : `${salesData.length} months`;
 
   if (isError) {
     return <div className='m-5'>Failed to fetch data</div>;
@@ -113,8 +122,8 @@ const CardSalesSummary = () => {
                     axisLine={false}
                   />
                   <Tooltip
-                    formatter={(value: number) => [
-                      `$${value.toLocaleString('en')}`,
+                    formatter={(value: number | undefined) => [
+                      `$${(value ?? 0).toLocaleString('en')}`,
                     ]}
                     labelFormatter={(label) => {
                       const date = new Date(label);
@@ -140,7 +149,7 @@ const CardSalesSummary = () => {
           <div className='flex-shrink-0'>
             <hr className='border-gray-300 dark:border-gray-700' />
             <div className='flex justify-between items-center mt-6 text-sm px-7 mb-4'>
-              <p>{salesData.length || 0} days</p>
+              <p>{periodLabel}</p>
               <p className='text-sm'>
                 Highest Sales Date:{' '}
                 <span className='font-bold'>{highestValueDate}</span>

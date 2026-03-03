@@ -1,4 +1,41 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import {
+  BaseQueryFn,
+  createApi,
+  FetchArgs,
+  fetchBaseQuery,
+  FetchBaseQueryError,
+} from '@reduxjs/toolkit/query/react';
+import { logout, updateTokens } from './authSlice';
+
+/* ── Auth Types ── */
+export interface AuthUser {
+  userId: string;
+  name: string;
+  email: string;
+  role: string;
+}
+
+export interface AuthResponse {
+  user: AuthUser;
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface TokenRefreshResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
 
 export interface Product {
   productId: string;
@@ -6,6 +43,7 @@ export interface Product {
   price: number;
   rating?: number;
   stockQuantity: number;
+  stockThreshold?: number;
 }
 
 export interface NewProduct {
@@ -13,6 +51,7 @@ export interface NewProduct {
   price: number;
   rating?: number;
   stockQuantity: number;
+  stockThreshold?: number;
 }
 
 export interface SalesSummary {
@@ -50,15 +89,77 @@ export interface DashboardMetrics {
   expenseByCategorySummary: ExpenseByCategorySummary[];
 }
 
+/* ── KPI Metrics ── */
+export interface KpiMetrics {
+  totalRevenue: number;
+  revenueChange: number;
+  totalProducts: number;
+  totalUsers: number;
+  totalExpenses: number;
+  expenseChange: number;
+  totalSalesCount: number;
+  lowStockCount: number;
+}
+
+/* ── Sales Aggregation ── */
+export interface SalesAggregationItem {
+  totalValue: number;
+  date: string;
+  changePercentage: number;
+}
+
+/* ── Reports ── */
+export interface ReportData {
+  profitAndLoss: {
+    totalRevenue: number;
+    totalCost: number;
+    totalExpenses: number;
+    grossProfit: number;
+    netProfit: number;
+  };
+  stockValuation: number;
+  topSellingProducts: {
+    productId: string;
+    name: string;
+    totalRevenue: number;
+    totalQuantity: number;
+  }[];
+  salesTrend: { date: string; amount: number }[];
+  summary: {
+    salesCount: number;
+    purchasesCount: number;
+    expensesCount: number;
+  };
+}
+
+/* ── Low Stock ── */
+export interface LowStockProduct {
+  productId: string;
+  name: string;
+  stockQuantity: number;
+  stockThreshold: number;
+  price: number;
+}
+
+export interface LowStockEmailResponse {
+  message: string;
+  messageId?: string;
+  previewUrl?: string;
+  productsCount?: number;
+}
+
 export interface User {
   userId: string;
   name: string;
   email: string;
+  role: string;
 }
 
 export interface NewUser {
   name: string;
   email: string;
+  password?: string;
+  role?: string;
 }
 
 export interface Expense {
@@ -120,8 +221,62 @@ export interface PaginatedResponse<T> {
   pagination: PaginationInfo;
 }
 
+/* ── Custom baseQuery with auth token injection and auto-refresh ── */
+const rawBaseQuery = fetchBaseQuery({
+  baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL,
+  prepareHeaders: (headers, { getState }) => {
+    const token = (getState() as { auth: { accessToken: string | null } }).auth
+      .accessToken;
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return headers;
+  },
+});
+
+const baseQueryWithReauth: BaseQueryFn<
+  string | FetchArgs,
+  unknown,
+  FetchBaseQueryError
+> = async (args, api, extraOptions) => {
+  let result = await rawBaseQuery(args, api, extraOptions);
+
+  if (result.error && result.error.status === 401) {
+    // Try refreshing the token
+    const state = api.getState() as {
+      auth: { refreshToken: string | null };
+    };
+    const refreshTokenValue = state.auth.refreshToken;
+
+    if (refreshTokenValue) {
+      const refreshResult = await rawBaseQuery(
+        {
+          url: '/auth/refresh',
+          method: 'POST',
+          body: { refreshToken: refreshTokenValue },
+        },
+        api,
+        extraOptions
+      );
+
+      if (refreshResult.data) {
+        const tokens = refreshResult.data as TokenRefreshResponse;
+        api.dispatch(updateTokens(tokens));
+        // Retry the original request with the new token
+        result = await rawBaseQuery(args, api, extraOptions);
+      } else {
+        api.dispatch(logout());
+      }
+    } else {
+      api.dispatch(logout());
+    }
+  }
+
+  return result;
+};
+
 export const api = createApi({
-  baseQuery: fetchBaseQuery({ baseUrl: process.env.NEXT_PUBLIC_API_BASE_URL }),
+  baseQuery: baseQueryWithReauth,
   reducerPath: 'api',
   tagTypes: [
     'DashboardMetrics',
@@ -132,10 +287,65 @@ export const api = createApi({
     'Purchases',
   ],
   endpoints: (build) => ({
+    /* ── Auth ── */
+    registerUser: build.mutation<AuthResponse, RegisterRequest>({
+      query: (body) => ({ url: '/auth/register', method: 'POST', body }),
+    }),
+    loginUser: build.mutation<AuthResponse, LoginRequest>({
+      query: (body) => ({ url: '/auth/login', method: 'POST', body }),
+    }),
+    refreshToken: build.mutation<
+      TokenRefreshResponse,
+      { refreshToken: string }
+    >({
+      query: (body) => ({ url: '/auth/refresh', method: 'POST', body }),
+    }),
+    getMe: build.query<AuthUser, void>({
+      query: () => '/auth/me',
+    }),
+    updateProfile: build.mutation<AuthUser, { name?: string; email?: string }>({
+      query: (body) => ({ url: '/auth/profile', method: 'PUT', body }),
+    }),
+
     /* ── Dashboard ── */
     getDashboardMetrics: build.query<DashboardMetrics, void>({
       query: () => '/dashboard',
       providesTags: ['DashboardMetrics'],
+    }),
+    getKpiMetrics: build.query<KpiMetrics, void>({
+      query: () => '/dashboard/kpi',
+      providesTags: ['DashboardMetrics'],
+    }),
+    getSalesAggregation: build.query<SalesAggregationItem[], string>({
+      query: (timeframe) => ({
+        url: '/dashboard/sales-aggregation',
+        params: { timeframe },
+      }),
+      providesTags: ['DashboardMetrics'],
+    }),
+    getReports: build.query<
+      ReportData,
+      { startDate?: string; endDate?: string } | void
+    >({
+      query: (params) => ({
+        url: '/dashboard/reports',
+        params: params || {},
+      }),
+      providesTags: ['DashboardMetrics'],
+    }),
+    getLowStockProducts: build.query<LowStockProduct[], void>({
+      query: () => '/dashboard/low-stock',
+      providesTags: ['DashboardMetrics', 'Products'],
+    }),
+    sendLowStockEmailAlert: build.mutation<
+      LowStockEmailResponse,
+      { email: string }
+    >({
+      query: (body) => ({
+        url: '/dashboard/low-stock/notify',
+        method: 'POST',
+        body,
+      }),
     }),
 
     /* ── Products ── */
@@ -313,7 +523,17 @@ export const api = createApi({
 });
 
 export const {
+  useRegisterUserMutation,
+  useLoginUserMutation,
+  useRefreshTokenMutation,
+  useGetMeQuery,
+  useUpdateProfileMutation,
   useGetDashboardMetricsQuery,
+  useGetKpiMetricsQuery,
+  useGetSalesAggregationQuery,
+  useGetReportsQuery,
+  useGetLowStockProductsQuery,
+  useSendLowStockEmailAlertMutation,
   useGetProductsQuery,
   useGetProductByIdQuery,
   useCreateProductMutation,

@@ -17,6 +17,12 @@ export const createProductSchema = z.object({
     .number()
     .int('Stock quantity must be a whole number')
     .min(0, 'Stock quantity cannot be negative'),
+  stockThreshold: z
+    .number()
+    .int('Stock threshold must be a whole number')
+    .min(0, 'Stock threshold cannot be negative')
+    .optional()
+    .default(10),
 });
 
 export const updateProductSchema = createProductSchema.partial();
@@ -32,6 +38,12 @@ export const createUserSchema = z.object({
     .min(1, 'Name is required')
     .max(255, 'Name must be 255 characters or less'),
   email: z.string().email('Invalid email address'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .max(128)
+    .optional(),
+  role: z.enum(['admin', 'manager', 'viewer']).optional(),
 });
 
 export const updateUserSchema = createUserSchema.partial();
@@ -101,3 +113,40 @@ export const updatePurchaseSchema = createPurchaseSchema.partial();
 
 export type CreatePurchaseInput = z.infer<typeof createPurchaseSchema>;
 export type UpdatePurchaseInput = z.infer<typeof updatePurchaseSchema>;
+
+/* ── Auth Schemas ── */
+
+export const registerSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(255, 'Name must be 255 characters or less'),
+  email: z.string().email('Invalid email address'),
+  password: z
+    .string()
+    .min(6, 'Password must be at least 6 characters')
+    .max(128, 'Password must be 128 characters or less'),
+});
+
+export const loginSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+export const refreshTokenSchema = z.object({
+  refreshToken: z.string().min(1, 'Refresh token is required'),
+});
+
+export const updateProfileSchema = z.object({
+  name: z
+    .string()
+    .min(1, 'Name is required')
+    .max(255, 'Name must be 255 characters or less')
+    .optional(),
+  email: z.string().email('Invalid email address').optional(),
+});
+
+export type RegisterInput = z.infer<typeof registerSchema>;
+export type LoginInput = z.infer<typeof loginSchema>;
+export type RefreshTokenInput = z.infer<typeof refreshTokenSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

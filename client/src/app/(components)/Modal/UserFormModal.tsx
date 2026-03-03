@@ -1,19 +1,16 @@
-/* eslint-disable react-hooks/set-state-in-effect */
 'use client';
 
+import { UserFormValues, userFormSchema } from '@/lib/formSchemas';
 import { User } from '@/state/api';
-import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useEffect } from 'react';
+import { useForm } from 'react-hook-form';
 import Header from '../Header';
-
-type UserFormData = {
-  name: string;
-  email: string;
-};
 
 type UserFormModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (formData: UserFormData) => void;
+  onSubmit: (formData: UserFormValues) => void;
   /** When provided, the modal is in "edit" mode */
   user?: User | null;
 };
@@ -25,78 +22,75 @@ const UserFormModal = ({
   user,
 }: UserFormModalProps) => {
   const isEdit = !!user;
-  const initialFormState: UserFormData = {
-    name: user?.name ?? '',
-    email: user?.email ?? '',
-  };
 
-  const [formData, setFormData] = useState(initialFormState);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<UserFormValues>({
+    resolver: zodResolver(userFormSchema),
+    defaultValues: {
+      name: user?.name ?? '',
+      email: user?.email ?? '',
+    },
+  });
 
   useEffect(() => {
-    setFormData({
+    reset({
       name: user?.name ?? '',
       email: user?.email ?? '',
     });
-  }, [user]);
+  }, [user, reset]);
 
-  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
-
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    onSubmit(formData);
-    if (!isEdit) setFormData({ name: '', email: '' });
+  const onFormSubmit = (data: UserFormValues) => {
+    onSubmit(data);
+    if (!isEdit) reset({ name: '', email: '' });
     onClose();
   };
 
   if (!isOpen) return null;
 
-  const labelCssStyles =
-    'block text-sm font-medium text-gray-700 dark:text-gray-300';
-  const inputCssStyles =
-    'block w-full mb-2 p-2 border-gray-500 dark:border-gray-600 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const labelCss = 'block text-sm font-medium text-gray-700 dark:text-gray-300';
+  const inputCss =
+    'block w-full mb-1 p-2 border-gray-500 dark:border-gray-600 border-2 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  const errorCss = 'text-red-500 text-xs mb-2';
 
   return (
     <div className='fixed inset-0 bg-black/30 backdrop-blur-sm overflow-y-auto h-full w-full z-20'>
       <div className='relative top-20 mx-auto p-5 border border-gray-300 dark:border-gray-600 w-96 shadow-lg rounded-md bg-white dark:bg-gray-800'>
         <Header name={isEdit ? 'Edit User' : 'Create New User'} />
-        <form onSubmit={handleSubmit} className='mt-5'>
-          <label htmlFor='userName' className={labelCssStyles}>
-            Name
-          </label>
+        <form onSubmit={handleSubmit(onFormSubmit)} className='mt-5'>
+          <label className={labelCss}>Name</label>
           <input
             type='text'
-            name='name'
             placeholder='Name'
-            onChange={handleChange}
-            value={formData.name}
-            className={inputCssStyles}
-            required
+            {...register('name')}
+            className={inputCss}
           />
+          {errors.name && <p className={errorCss}>{errors.name.message}</p>}
 
-          <label htmlFor='userEmail' className={labelCssStyles}>
-            Email
-          </label>
+          <label className={labelCss}>Email</label>
           <input
             type='email'
-            name='email'
             placeholder='Email'
-            onChange={handleChange}
-            value={formData.email}
-            className={inputCssStyles}
-            required
+            {...register('email')}
+            className={inputCss}
           />
+          {errors.email && <p className={errorCss}>{errors.email.message}</p>}
 
           <button
             type='submit'
-            className='mt-4 px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-700'
+            disabled={isSubmitting}
+            className='mt-4 px-4 py-2 cursor-pointer bg-blue-500 text-white rounded hover:bg-blue-700 disabled:opacity-50'
           >
             {isEdit ? 'Save Changes' : 'Create'}
           </button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              reset();
+              onClose();
+            }}
             type='button'
             className='ml-2 px-4 py-2 cursor-pointer bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded'
           >

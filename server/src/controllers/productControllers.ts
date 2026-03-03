@@ -51,13 +51,14 @@ export const createProduct = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, price, rating, stockQuantity } = req.body;
+    const { name, price, rating, stockQuantity, stockThreshold } = req.body;
     const product = await prisma.products.create({
       data: {
         name,
         price,
         rating,
         stockQuantity,
+        ...(stockThreshold !== undefined && { stockThreshold }),
       },
     });
     res.status(201).json(product);
@@ -72,7 +73,7 @@ export const updateProduct = async (
 ): Promise<void> => {
   try {
     const { id } = req.params;
-    const { name, price, rating, stockQuantity } = req.body;
+    const { name, price, rating, stockQuantity, stockThreshold } = req.body;
 
     const existing = await prisma.products.findUnique({
       where: { productId: id },
@@ -85,7 +86,7 @@ export const updateProduct = async (
 
     const product = await prisma.products.update({
       where: { productId: id },
-      data: { name, price, rating, stockQuantity },
+      data: { name, price, rating, stockQuantity, stockThreshold },
     });
 
     res.json(product);

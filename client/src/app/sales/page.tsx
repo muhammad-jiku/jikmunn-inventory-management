@@ -1,5 +1,8 @@
 'use client';
 
+import { dataGridClassName, dataGridDarkModeSx } from '@/lib/dataGridStyles';
+import { exportToCsv } from '@/lib/exportUtils';
+import { toastError, toastSuccess } from '@/lib/toast';
 import {
   Sale,
   useCreateSaleMutation,
@@ -8,11 +11,19 @@ import {
   useUpdateSaleMutation,
 } from '@/state/api';
 import { DataGrid, GridActionsCellItem, GridColDef } from '@mui/x-data-grid';
-import { EditIcon, PlusCircleIcon, Trash2Icon } from 'lucide-react';
+import {
+  Download,
+  EditIcon,
+  PlusCircleIcon,
+  Trash2Icon,
+  TrendingUp,
+} from 'lucide-react';
 import { useMemo, useState } from 'react';
+import EmptyState from '../(components)/EmptyState';
 import Header from '../(components)/Header';
 import ConfirmDialog from '../(components)/Modal/ConfirmDialog';
 import SaleFormModal from '../(components)/Modal/SaleFormModal';
+import { TableSkeleton } from '../(components)/Skeleton';
 
 const Sales = () => {
   const { data: salesResponse, isLoading, isError } = useGetSalesQuery();
@@ -32,7 +43,12 @@ const Sales = () => {
     unitPrice: number;
     timestamp: string;
   }) => {
-    await createSale(formData);
+    try {
+      await createSale(formData).unwrap();
+      toastSuccess('Sale recorded successfully');
+    } catch (err) {
+      toastError(err, 'Failed to create sale');
+    }
   };
 
   const handleUpdate = async (formData: {
@@ -42,12 +58,22 @@ const Sales = () => {
     timestamp: string;
   }) => {
     if (!editingSale) return;
-    await updateSale({ id: editingSale.saleId, ...formData });
+    try {
+      await updateSale({ id: editingSale.saleId, ...formData }).unwrap();
+      toastSuccess('Sale updated successfully');
+    } catch (err) {
+      toastError(err, 'Failed to update sale');
+    }
   };
 
   const handleDelete = async () => {
     if (!deletingSaleId) return;
-    await deleteSale(deletingSaleId);
+    try {
+      await deleteSale(deletingSaleId).unwrap();
+      toastSuccess('Sale deleted');
+    } catch (err) {
+      toastError(err, 'Failed to delete sale');
+    }
     setDeletingSaleId(null);
   };
 
@@ -109,9 +135,26 @@ const Sales = () => {
     },
   ];
 
+  const handleExport = () => {
+    if (!sales.length) return;
+    exportToCsv(sales as unknown as Record<string, unknown>[], 'sales', [
+      { key: 'saleId', label: 'ID' },
+      { key: 'productId', label: 'Product ID' },
+      { key: 'quantity', label: 'Quantity' },
+      { key: 'unitPrice', label: 'Unit Price' },
+      { key: 'totalAmount', label: 'Total' },
+      { key: 'timestamp', label: 'Date' },
+    ]);
+  };
+
   if (isLoading) {
     return (
-      <div className='py-4 text-gray-900 dark:text-gray-100'>Loading...</div>
+      <div className='flex flex-col'>
+        <Header name='Sales' />
+        <div className='mt-5'>
+          <TableSkeleton rows={6} cols={6} />
+        </div>
+      </div>
     );
   }
 
@@ -128,33 +171,46 @@ const Sales = () => {
       {/* HEADER */}
       <div className='mb-5 flex justify-between items-center'>
         <Header name='Sales' />
-        <button
-          className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
-          onClick={() => setIsCreateOpen(true)}
-        >
-          <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> New Sale
-        </button>
+        <div className='flex items-center gap-2'>
+          <button
+            onClick={handleExport}
+            className='flex items-center gap-1.5 px-3 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors'
+          >
+            <Download className='w-4 h-4' /> Export CSV
+          </button>
+          <button
+            className='flex items-center bg-blue-500 hover:bg-blue-700 text-gray-200 font-bold py-2 px-4 rounded'
+            onClick={() => setIsCreateOpen(true)}
+          >
+            <PlusCircleIcon className='w-5 h-5 mr-2 text-gray-200' /> New Sale
+          </button>
+        </div>
       </div>
 
-      {/* DATA GRID */}
-      <DataGrid
-        rows={sales}
-        columns={columns}
-        getRowId={(row) => row.saleId}
-        checkboxSelection
-        className='bg-white dark:bg-gray-800 shadow rounded-lg border-none text-gray-700 dark:text-gray-200'
-        sx={{
-          '& .MuiDataGrid-cell': {
-            borderBottom: '1px solid',
-            borderColor: 'var(--tw-border-opacity, rgba(229,231,235,1))',
-          },
-          '.dark &': {
-            '& .MuiDataGrid-cell': {
-              borderColor: 'rgba(75,85,99,1)',
-            },
-          },
-        }}
-      />
+      {sales.length > 0 ? (
+        <DataGrid
+          rows={sales}
+          columns={columns}
+          getRowId={(row) => row.saleId}
+          checkboxSelection
+          className={dataGridClassName}
+          sx={dataGridDarkModeSx}
+        />
+      ) : (
+        <EmptyState
+          icon={TrendingUp}
+          title='No sales recorded'
+          description='Record your first sale to start tracking revenue.'
+          action={
+            <button
+              onClick={() => setIsCreateOpen(true)}
+              className='flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm'
+            >
+              <PlusCircleIcon className='w-4 h-4' /> New Sale
+            </button>
+          }
+        />
+      )}
 
       {/* CREATE MODAL */}
       <SaleFormModal
