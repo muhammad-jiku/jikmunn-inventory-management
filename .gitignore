@@ -14,8 +14,13 @@ out
 logs
 *.log
 
-# Coverage
-coverage
+# Coverage & Test Reports
+**/coverage
+**/playwright-report
+**/test-results
+
+# Build Cache
+**/.swc
 
 # IDE
 .vscode
